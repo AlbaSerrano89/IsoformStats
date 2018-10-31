@@ -104,7 +104,6 @@ else:
             except IndexError:
                 thres2 = 0.7
             
-            print('holi')
             Functions.big_summary(DATA, thres, thres2)
 
         elif expr_sum != None:
@@ -136,4 +135,9 @@ else:
             Functions.statistics(stats[0])
 #        
     except FileNotFoundError:
-        print('You must charge the data before using any other function.\nPlease, type "python analyse_rnaseq.py -U csv_file".')
+        try:
+            # Python3
+            print('You must charge the data before using any other function.\nPlease, type "python analyse_rnaseq.py -U csv_file".')
+        except SyntaxError:
+            # Python2
+            print "You must charge the data before using any other function.\nPlease, type 'python analyse_rnaseq.py -U csv_file'."

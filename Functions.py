@@ -82,7 +82,7 @@ def general_view(all_data, gene):
             return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
         else:
             n_isos = len(dat[gene2])
-            lim = (n_isos - 1) / 2
+            lim = (n_isos - 1) / 2.0
             ind = numpy.arange(nsamps)
             
             fig, ax = plt.subplots()
@@ -90,7 +90,7 @@ def general_view(all_data, gene):
             
             for i in range(0, n_isos):
                 info_gene = dat[gene2][i]
-                ax.bar(ind + (i - lim) * width/n_isos, info_gene[2], width/n_isos, label = info_gene[0])
+                ax.bar(ind + (i - lim) * width / float(n_isos), info_gene[2], width / float(n_isos), label = info_gene[0])
         
             ax.set_ylabel('Proportion')
             ax.set_title('Distribution of samples of the gene ' + gene2)
@@ -117,7 +117,7 @@ def total_prop(all_data, gene):
             list_props = []
             Proportions = {}
             for iso, samps, props in dat[gene2]:
-                iso_prop = sum(props) / nsamps
+                iso_prop = sum(props) / float(nsamps)
                 list_props.append([iso, iso_prop])
             
             Proportions[gene2] = list_props
@@ -230,14 +230,14 @@ def sorted_barplot(all_data, gene, thres = 0.9):
                         sorted_iso.append(iso_data)
             
             n_isos = len(sorted_iso)
-            lim = (n_isos - 1) / 2
+            lim = (n_isos - 1) / 2.0
             ind = numpy.arange(nsamps)
             
             fig, ax = plt.subplots()
             width = 0.75
             
             for i in range(0, n_isos):
-                ax.bar(ind + (i - lim) * width/n_isos, sorted_iso[i][2], width/n_isos, label = sorted_iso[i][0])
+                ax.bar(ind + (i - lim) * width / float(n_isos), sorted_iso[i][2], width / float(n_isos), label = sorted_iso[i][0])
             
             ax.set_ylabel('Proportion')
             ax.set_title('Distribution of samples of the gene ' + gene2)
@@ -322,7 +322,7 @@ def isoform_stats(all_data, gene, thres = 0.9, thres2 = 0.7):
             total = acum[-1]
             new_prop = []
             for num in acum:
-                new_num = num / total
+                new_num = num / float(total)
                 new_prop.append(new_num)
 
             return([isos, values, acum, new_prop])
@@ -376,8 +376,8 @@ def notexp_stats(csv_file):
     df = pd.read_csv(csv_file)
     ntotal = df['Type'].count()
     
-    expr = df.loc[df['Type'] != 'NotExpressed']['Type'].count() / ntotal
-    notexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count() / ntotal
+    expr = df.loc[df['Type'] != 'NotExpressed']['Type'].count() / float(ntotal)
+    notexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count() / float(ntotal)
     
     stats = [['Expressed', 'NotExpressed'], [expr, notexp]]
     
@@ -397,10 +397,10 @@ def statistics(csv_file):
     nmulti = df.loc[df['Type'] == 'Multiform']['Type'].count()
     ntotal = nmono + nbi + ntri + nmulti
     
-    pmono = nmono / ntotal
-    pbi = nbi / ntotal
-    ptri = ntri / ntotal
-    pmulti = nmulti / ntotal
+    pmono = nmono / float(ntotal)
+    pbi = nbi / float(ntotal)
+    ptri = ntri / float(ntotal)
+    pmulti = nmulti / float(ntotal)
     
     stats = [['Monoform', 'Biform', 'Triform', 'Multiform'], [pmono, pbi, ptri, pmulti]]
     
@@ -458,16 +458,16 @@ def TEC_ij(ints, gene):
                 t2 += 1
         
         if t1 != 0:
-            m1 = d1/t1
+            m1 = d1 / float(t1)
         else:
             m1 = 0
     
         if t2 != 0:
-            m2 = d2/t2
+            m2 = d2 / float(t2)
         else:
             m2 = 0
     
-        TECij = round((m1 + m2) / 2, 3)
+        TECij = round((m1 + m2) / 2.0, 3)
         TEC_list.append([inter[0], [(d1, t1, d2, t2), TECij]])
     
     TEC[gene2] = TEC_list
@@ -504,11 +504,11 @@ def TEClevels_ij(ints, gene):
         if sum1 == 0 and sum2 == 0:
             tec_ij = 0
         elif sum1 == 0:
-            tec_ij = (acum2/sum2) / 2
+            tec_ij = (acum2 / float(sum2)) / 2.0
         elif sum2 == 0:
-            tec_ij = (acum1/sum1) / 2
+            tec_ij = (acum1 / float(sum1)) / 2.0
         else:
-            tec_ij = (acum1/sum1 + acum2/sum2) / 2
+            tec_ij = (acum1 / float(sum1) + acum2 / float(sum2)) / 2.0
         
         TECij = round(tec_ij, 3)
         TEC_list.append([inter[0], TECij])
