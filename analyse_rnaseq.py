@@ -7,141 +7,175 @@ Created on Mon Oct 29 17:01:31 2018
 """
 
 import argparse
-import pickle
 import Functions
 
 #if __name__ == "__main__":
 parser = argparse.ArgumentParser()
-parser.add_argument("-U", "--upload", dest = "upload", nargs = 1, help = "Uploads the original file and creates a temporal binary file to make the loading of the data faster.")
-parser.add_argument("-G", "--general", dest = "general", nargs = 1, help = "Returns a general view of the gene you select, using a barplot")
-parser.add_argument("-P", "--pieplot", dest = "pieplot", nargs = "+", help = "Returns a pie plot showing the isoforms of the gene you select in order of expression.\nThe threshold is used to put the least expressed isoform as 'other'.")
-parser.add_argument("-B", "--barplot", dest = "barplot", nargs = "+", help = "Returns a bar plot showing just the most expressed isoforms of the gene you select.\nThe threshold is used to put the least expressed isoform as 'other'.")
-parser.add_argument("-SB", "--stackedbarplot", dest = "stackedbarplot", nargs = "+", help = "Returns a stacked bar plot showing just the most expressed isoforms of the gene you select.\nThe threshold is used to put the least expressed isoform as 'other'.")
-parser.add_argument("-BS", "--bigsummary", dest = "bigsummary", nargs = "*", help = "Returns a csv file with a conclusion for each gene.\nThe threshold is used to put the least expressed isoform as 'other'.\nThe threshold2 is the value you consider is significative.\n")
-parser.add_argument("-E", "--expression", dest = "expsum", nargs = "+", help = "Returns a list with the statistics of the dataframe of 'bigsummary' and a pie plot for an easy visualization.\nThe threshold is used to put the least expressed isoform as 'other'.\nThe threshold2 is the value you consider is significative.\n")
-parser.add_argument("-St", "--stats", dest = "stats", nargs = "+", help = "Returns a list with the statistics of the dataframe of 'bigsummary' and a pie plot for an easy visualization.\nThe threshold is used to put the least expressed isoform as 'other'.\nThe threshold2 is the value you consider is significative.\n")
-parser.add_argument("--binfile", dest = "binfile",required=False, type = str, default='temp_file',  help = "binary file with dict-ENST correspondende")
-parser.add_argument("--outfile", dest = "outfile",required=False, type = str, default='outfile.csv',  help = "output_filename_for your function. [default = outfile.csv")
+
+parser.add_argument("data", help = "A csv or gzip file with the data you want to analyse.")
+parser.add_argument("--gene", dest = "gene", required = False, help = "The gene to analyse.")
+parser.add_argument("--outfile", dest = "outfile", required = False, help = "The name of the bigsummary file.")
+parser.add_argument("--threshold", dest = "thres", required = False, help = "A threshold used to put the least expressed isoform as 'other'.")
+parser.add_argument("--threshold2", dest = "thres2", required = False, help = "A second threshold, in this case, to select the most significative isoforms.")
+parser.add_argument("--tissuefile", dest = "tissuefile", required = False, help = "The name of the bigsummary file.")
+parser.add_argument("--tissue", dest = "tissue", required = False, help = "The tissue of the data.")
+
+parser.add_argument("-G", "--general", nargs = "*", dest = "general", help = "Returns a general view of the gene you select, using a barplot.")
+parser.add_argument("-P", "--pieplot", nargs = "*", dest = "pieplot", help = "Returns a pie plot showing the isoforms of the gene you select in order of expression.")
+parser.add_argument("-B", "--stackedbarplot", nargs = "*", dest = "stackedbarplot", help = "Returns a stacked bar plot showing just the most expressed isoforms of the gene you select.")
+parser.add_argument("-BS", "--bigsummary", nargs = "*", dest = "bigsummary", help = "Returns a csv file with a conclusion for each gene.")
+parser.add_argument("-SB", "--summarybarplot", nargs = "*", dest = "sumbar", help = "Returns a barplot with the statistics of the dataframe of 'bigsummary'.")
+parser.add_argument("-E", "--expression", nargs = "*", dest = "expsum", help = "Returns a list with the statistics of the dataframe of 'bigsummary' and a pie plot for an easy visualization.")
+parser.add_argument("-St", "--stats", nargs = "*", dest = "stats", help = "Returns a list with the statistics of the dataframe of 'bigsummary' and a pie plot for an easy visualization.")
 
 args = parser.parse_args()
 
-upload = args.upload
+data = args.data
 general = args.general
 pieplot = args.pieplot
-barplot = args.barplot
 stackedbarplot = args.stackedbarplot
 bigsummary = args.bigsummary
+sum_bar = args.sumbar
 expr_sum = args.expsum
 stats = args.stats
 
-# U = upload the initial data --> analyse_rnaseq.py U file
-if upload != None:
-    DATA = Functions.reading_data(upload[0])
-    f = open(args.binfile,'wb')
-    pickle.dump(DATA, f)
-else:
-    try:
-        pickle_file = open(args.binfile, 'rb')
-        DATA = pickle.load(pickle_file)
-        
-        if general != None:
-            # G = general view of the expression of 1 gene using barplots --> analyse_rnaseq.py G gene
-            try:
-                gene = int(general[0])
-            except ValueError:
-                gene = general[0]
-            
-            Functions.general_view(DATA, gene)
-            
-        elif pieplot != None:
-            # P = pie plot of the distribution of the expression of 1 gene --> analyse_rnaseq.py P1 gene 'thres'
-            try:
-                gene = int(pieplot[0])
-            except ValueError:
-                gene = pieplot[0]
-            
-            try:
-                thres = float(pieplot[1])
-            except IndexError:
-                thres = 0.9
-            
-            Functions.pie_plot(DATA, gene, thres)
-        
-        elif barplot != None:
-            # B = sorted barplot of the distribution of the expression of 1 gene --> analyse_rnaseq.py B gene 'thres'
-            try:
-                gene = int(barplot[0])
-            except ValueError:
-                gene = barplot[0]
-            
-            try:
-                thres = float(barplot[1])
-            except IndexError:
-                thres = 0.9
-            
-            Functions.sorted_barplot(DATA, gene, thres)
+gene = args.gene
+outfile = args.outfile
+tissuefile = args.tissuefile
+thres = args.thres
+thres2 = args.thres2
+tissue = args.tissue
 
-        elif stackedbarplot != None:
-            # SB = sorted stacked barplot of the distribution of the expression of 1 gene --> analyse_rnaseq.py SB gene 'thres'
-            try:
-                gene = int(stackedbarplot[0])
-            except ValueError:
-                gene = stackedbarplot[0]
-            
-            try:
-                thres = float(stackedbarplot[1])
-            except IndexError:
-                thres = 0.9
-            
-            Functions.sorted_stacked_barplot(DATA, gene, thres)
+DATA = Functions.reading_data(data)
 
-        elif bigsummary != None:
-            # BS = dataframe with a summary of the classification of all the genes: Mono, Bi, Tri or Multi? --> analyse_rnaseq.py BS 'thres' 'thres2' 
-            try:
-                thres = float(bigsummary[0])
-            except IndexError:
-                thres = 0.9
-
-            try:
-                thres2 = float(bigsummary[1])
-            except IndexError:
-                thres2 = 0.7
-            
-            Functions.big_summary(DATA, thres, thres2,args.outfile )
-
-        elif expr_sum != None:
-            # E = classification of the gene: expressed or not expressed? and a pieplot --> analyse_rnaseq.py E csv_file 'thres' 'thres2'
-            try:
-                thres = float(expr_sum[1])
-            except IndexError:
-                thres = 0.9
-
-            try:
-                thres2 = float(expr_sum[2])
-            except IndexError:
-                thres2 = 0.7
-            
-            Functions.notexp_stats(expr_sum[0])
-        
-        elif stats != None:
-            # St = statistics of the classification of all the genes: Mono, Bi, Tri or Multi? --> analyse_rnaseq.py St csv_file 'thres' 'thres2'
-            try:
-                thres = float(stats[1])
-            except IndexError:
-                thres = 0.9
-
-            try:
-                thres2 = float(stats[2])
-            except IndexError:
-                thres2 = 0.7
-            
-            Functions.statistics(stats[0])
-#        
-    except FileNotFoundError:
-    
+if general != None:
+    # python analyse_rnaseq.py csv_file -G --gene genename/geneposition
+    # G = general view of the expression of 1 gene using a barplot
+    if gene != None:
         try:
-            # Python3
-            print('You must charge the data before using any other function.\nPlease, type "python analyse_rnaseq.py -U csv_file".')
-        except SyntaxError:
-            # Python2
-            print "You must charge the data before using any other function.\nPlease, type 'python analyse_rnaseq.py -U csv_file'."
+            gene1 = int(gene)
+        except ValueError:
+            gene1 = gene
+    
+        a = Functions.general_view(DATA, gene1)
+        
+        if type(a) == str:
+            print(a)
+    else:
+        parser.error("You have to specify the gene name or the gene position in your list of genes.")
+    
+elif pieplot != None:
+    # python analyse_rnaseq.py csv_file -P --gene genename/geneposition '--threshold thres'
+    # P = pie plot of the distribution of the expression of 1 gene
+    if gene != None:
+        try:
+            gene1 = int(gene)
+        except ValueError:
+            gene1 = gene
+    
+        if thres != None:
+            thres1 = float(thres)
+        else:
+            thres1 = 0.9
+            
+        a = Functions.pie_plot(DATA, gene1, thres1)
+    
+        if type(a) == str:
+            print(a)
+    else:
+        parser.error("You have to specify the gene name or the gene position in your list of genes.")
+    
+elif stackedbarplot != None:
+    # python analyse_rnaseq.py csv_file -B --gene genename/geneposition '--threshold thres'
+    # B = sorted stacked barplot of the distribution of the expression of 1 gene
+    if gene != None:
+        try:
+            gene1 = int(gene)
+        except ValueError:
+            gene1 = gene
+    
+        if thres != None:
+            thres1 = float(thres)
+        else:
+            thres1 = 0.9
+        
+        a = Functions.stacked_barplot(DATA, gene1, thres1)
+    
+        if type(a) == str:
+            print(a)
+    else:
+        parser.error("You have to specify the gene name or the gene position in your list of genes.")
+    
+elif bigsummary != None:
+    # python analyse_rnaseq.py csv_file -BS '--threshold thres' '--threshold2 thres2' '--outfile bigsummary_filename'
+    # BS = dataframe with a summary of the classification of all the genes: NotExpressed, Mono, Bi, Tri or Multi?
+    if thres != None:
+        thres1 = float(thres)
+    else:
+        thres1 = 0.9
+
+    if thres2 != None:
+        thres3 = float(thres2)
+    else:
+        thres3 = 0.7
+    
+    if outfile != None:
+        filename = outfile
+    else:
+        filename = 'classif_genes_'
+    
+    Functions.big_summary(DATA, thres1, thres3, filename)
+
+if sum_bar != None:
+    # python analyse_rnaseq.py csv_file -SB '--tissuefile bigsummary_filename' '--tissue tissue_name'
+    # SB = barplot with the classification of the genes
+    if tissuefile != None:
+        filename = tissuefile
+    else:
+        filename = 'classif_genes_90.0_70.0.csv'
+    
+    if tissue != None:
+        tissue1 = tissue
+    else:
+        if data.endswith('gz'):
+            tissue1 = data[:-3]
+        else:
+            tissue1 = data[:-4]
+    
+    Functions.stats_barplot(filename, tissue1)
+    
+elif expr_sum != None:
+    # python analyse_rnaseq.py csv_file -E '--tissuefile bigsummary_filename' '--tissue tissue_name'
+    # E = classification of the genes: expressed or not expressed? and a pieplot
+    if tissuefile != None:
+        filename = tissuefile
+    else:
+        filename = 'classif_genes_90.0_70.0.csv'
+    
+    if tissue != None:
+        tissue1 = tissue
+    else:
+        if data.endswith('gz'):
+            tissue1 = data[:-3]
+        else:
+            tissue1 = data[:-4]
+    
+    Functions.notexp_stats(filename, tissue1)
+    
+elif stats != None:
+    # python analyse_rnaseq.py csv_file -St '--tissuefile bigsummary_filename' '--tissue tissue_name'
+    # St = statistics of the classification of all the genes: Mono, Bi, Tri or Multi?
+    if tissuefile != None:
+        filename = tissuefile
+    else:
+        filename = 'classif_genes_90.0_70.0.csv'
+    
+    if tissue != None:
+        tissue1 = tissue
+    else:
+        if data.endswith('gz'):
+            tissue1 = data[:-3]
+        else:
+            tissue1 = data[:-4]
+    
+    Functions.statistics(filename, tissue1)
