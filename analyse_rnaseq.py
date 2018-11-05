@@ -20,6 +20,9 @@ parser.add_argument("-SB", "--stackedbarplot", dest = "stackedbarplot", nargs = 
 parser.add_argument("-BS", "--bigsummary", dest = "bigsummary", nargs = "*", help = "Returns a csv file with a conclusion for each gene.\nThe threshold is used to put the least expressed isoform as 'other'.\nThe threshold2 is the value you consider is significative.\n")
 parser.add_argument("-E", "--expression", dest = "expsum", nargs = "+", help = "Returns a list with the statistics of the dataframe of 'bigsummary' and a pie plot for an easy visualization.\nThe threshold is used to put the least expressed isoform as 'other'.\nThe threshold2 is the value you consider is significative.\n")
 parser.add_argument("-St", "--stats", dest = "stats", nargs = "+", help = "Returns a list with the statistics of the dataframe of 'bigsummary' and a pie plot for an easy visualization.\nThe threshold is used to put the least expressed isoform as 'other'.\nThe threshold2 is the value you consider is significative.\n")
+parser.add_argument("--binfile", dest = "binfile",required=False, type = str, default='temp_file',  help = "binary file with dict-ENST correspondende")
+parser.add_argument("--outfile", dest = "outfile",required=False, type = str, default='outfile.csv',  help = "output_filename_for your function. [default = outfile.csv")
+
 args = parser.parse_args()
 
 upload = args.upload
@@ -34,11 +37,11 @@ stats = args.stats
 # U = upload the initial data --> analyse_rnaseq.py U file
 if upload != None:
     DATA = Functions.reading_data(upload[0])
-    f = open('temp_file','wb')
+    f = open(args.binfile,'wb')
     pickle.dump(DATA, f)
 else:
     try:
-        pickle_file = open('temp_file', 'rb')
+        pickle_file = open(args.binfile, 'rb')
         DATA = pickle.load(pickle_file)
         
         if general != None:
@@ -104,7 +107,7 @@ else:
             except IndexError:
                 thres2 = 0.7
             
-            Functions.big_summary(DATA, thres, thres2)
+            Functions.big_summary(DATA, thres, thres2,args.outfile )
 
         elif expr_sum != None:
             # E = classification of the gene: expressed or not expressed? and a pieplot --> analyse_rnaseq.py E csv_file 'thres' 'thres2'
@@ -135,6 +138,7 @@ else:
             Functions.statistics(stats[0])
 #        
     except FileNotFoundError:
+    
         try:
             # Python3
             print('You must charge the data before using any other function.\nPlease, type "python analyse_rnaseq.py -U csv_file".')

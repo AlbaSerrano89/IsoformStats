@@ -8,51 +8,53 @@ Created on Fri Oct 19 12:06:44 2018
 import numpy
 import matplotlib.pyplot as plt
 import pandas as pd
+import gzip
 
 def reading_data(csv_file):
-    pfile = open(csv_file,'r')
-    data = pfile.read()
-    pfile.close()
-
-    data2 = data.split("\n")
-    
-    cab = data2.pop(0)
-    cab2 = cab.split("\t")
-    
-    nsamps = len(cab2[2:])
-    samp_names = tuple(cab2[2:])
-    
-    if data2[-1] == '':
-        data2.pop()
+    if csv_file.endswith('gz'):
+        pfile = gzip.open(csv_file,'r')
+    else: 
+        pfile = open(csv_file,'r')
+    Data = dict()
+    with gzip.open(csv_file) if csv_file.endswith('gz') else open(csv_file) as rd:
+        #data = rd.read() # pfile.read()
+        #pfile.close()
         
-    data3 = []
-    for row in data2:
-        data3.append(row.split("\t"))
+        nsamps = 0
+        samp_names = ''
+        
+        for line in rd:
+            ff = line.strip().split('\t')
+            if line.startswith('transc'):
+                        nsamps = len(ff[2:])
+                        samp_names = tuple(ff[2:])
 
-    genes = []
-    for row in data3:
-        genes.append(row[1])
-
-    uni_genes = numpy.unique(genes)
-
-    Data = {}
-    for gene in uni_genes:
-        isos = []
-        for row in data3:
-            if row[1] == gene:
-                samps = []
-                nums = []
+            else:
+                # here I parse all lines
+                # to generate the Data dictionary
+                # keys are 'gene_names'
+                # Data[gene] = list of isos
+                # each iso  = [ ENST, samp]
+                gene_id = ff[1]
+                nums  = list()
+                samps = list()
                 for i in range(0, nsamps):
-                    num = float(row[i + 2])
-                    if num >= 0:
-                        samps.append(samp_names[i])
-                        nums.append(num)
-            
-                isos.append([row[0], tuple(samps), tuple(nums)])
-        
-        Data[gene] = isos
-        
-    return([uni_genes, Data, nsamps, samp_names])
+                        num = float(ff[i + 2])
+                        if num >= 0:
+                            samps.append(samp_names[i])
+                            nums.append(num)
+                # here I update or generate the data[gene_id] value
+                tmp  = Data.get(gene_id, None)
+                if tmp is None:
+                    Data[gene_id] = [[ff[0], tuple(samps), tuple(nums)]]
+                else:
+                    tmp.append([ff[0], tuple(samps), tuple(nums)])
+                    Data[gene_id] = tmp
+    # 
+    # 
+    # for i in Data.keys():
+    #     if len(Data[i][0][1]) > 1 :print Data[i]
+    return([Data.keys(), Data, nsamps, samp_names])
 
 def formatting_gene(all_data, gene):
     genes = all_data[0]
@@ -361,7 +363,8 @@ def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7):
     else:
         return(gene2)
 
-def big_summary(all_data, thres = 0.9, thres2 = 0.7):
+def big_summary(all_data, thres = 0.9, thres2 = 0.7,outname='classif_genes.csv'):
+    print outname
     all_types = {}
     for i in range(0, len(all_data[0])):
         res = type_of_gene(all_data, i, thres, thres2)
@@ -369,7 +372,7 @@ def big_summary(all_data, thres = 0.9, thres2 = 0.7):
     
     df = pd.DataFrame(all_types, index = ['Type', 'Isoforms'], dtype = "category")
     df = df.T
-    df.to_csv('classif_genes.csv')
+    df.to_csv(outname)
     return(df)
 
 def notexp_stats(csv_file):
