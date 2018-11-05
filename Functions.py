@@ -12,22 +12,21 @@ import gzip
 
 def reading_data(csv_file):
     Data = dict()
-    with gzip.open(csv_file) if csv_file.endswith('gz') else open(csv_file) as rd:
+    with gzip.open(csv_file, 'rt') if csv_file.endswith('gz') else open(csv_file) as rd:
         nsamps = 0
         samp_names = ''
         
         for line in rd:
             ff = line.strip().split('\t')
             if line.startswith('transc'):
-                        nsamps = len(ff[2:])
-                        samp_names = tuple(ff[2:])
+                nsamps = len(ff[2:])
+                samp_names = tuple(ff[2:])
 
             else:
-                # here I parse all lines
-                # to generate the Data dictionary
-                # keys are 'gene_names'
+                # here I parse all lines to generate the Data dictionary
+                # keys = 'gene_names'
                 # Data[gene] = list of isos
-                # each iso  = [ ENST, samp]
+                # each iso  = [ENST, samp]
                 gene_id = ff[1]
                 nums  = list()
                 samps = list()
@@ -276,7 +275,7 @@ def isoform_stats(all_data, gene, thres = 0.9, thres2 = 0.7):
     else:
         return(gene2)
 
-def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7):
+def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7, thres3 = 2):
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
     
@@ -289,31 +288,40 @@ def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7):
             isos = '-'
             stats = '-'
         else:
-            i = 0
-            while isos_stats[3][i] < thres2:
-                i += 1
-            
-            if i == 0:
-                tog = 'Monoform'
-            elif i == 1:
-                tog = 'Biform'
-            elif i == 2:
-                tog = 'Triform'
-            else:
-                tog = 'Multiform'
+            dat = all_data[1]
+            samp_names = dat[gene2][0][1]
+            nsamps = len(samp_names)
         
-            isos = isos_stats[0][:(i + 1)]
-            stats = isos_stats[1][:(i + 1)]
+            if nsamps < thres3:
+                tog = 'FewSamples'
+                isos = '-'
+                stats = '-'
+            else:
+                i = 0
+                while isos_stats[3][i] < thres2:
+                    i += 1
+                
+                if i == 0:
+                    tog = 'Monoform'
+                elif i == 1:
+                    tog = 'Biform'
+                elif i == 2:
+                    tog = 'Triform'
+                else:
+                    tog = 'Multiform'
+            
+                isos = isos_stats[0][:(i + 1)]
+                stats = isos_stats[1][:(i + 1)]
         
         Types[gene2] = [tog, isos, stats]
         return(Types)
     else:
         return(gene2)
 
-def big_summary(all_data, thres = 0.9, thres2 = 0.7, filename = 'classif_genes_'):
+def big_summary(all_data, thres = 0.9, thres2 = 0.7, thres3 = 10, filename = 'classif_genes_'):
     all_types = {}
     for i in range(0, len(all_data[0])):
-        res = type_of_gene(all_data, i, thres, thres2)
+        res = type_of_gene(all_data, i, thres, thres2, thres3)
         all_types.update(res)
     
     df = pd.DataFrame(all_types, index = ['Type', 'Isoforms', 'IsoformsProportion'], dtype = "category")
@@ -322,22 +330,23 @@ def big_summary(all_data, thres = 0.9, thres2 = 0.7, filename = 'classif_genes_'
     if filename != 'classif_genes_':
         filename1 = filename
     else:
-        filename1 = filename + str(thres * 100) + '_' + str(thres2 * 100) + '.csv'
+        filename1 = filename + str(thres * 100) + '_' + str(thres2 * 100) + '_' + str(thres3) + '.csv'
     
     df.to_csv(filename1)
     return(df)
 
-def stats_barplot(csv_file = 'classif_genes_90.0_70.0.csv', tissue_name = 'Tissue'):
+def stats_barplot(csv_file = 'classif_genes_90.0_70.0_10.csv', tissue_name = 'Tissue'):
     df = pd.read_csv(csv_file)
     ntotal = df['Type'].count()
     
     pnexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count() / float(ntotal)
+    pfew = df.loc[df['Type'] == 'FewSamples']['Type'].count() / float(ntotal)
     pmono = df.loc[df['Type'] == 'Monoform']['Type'].count() / float(ntotal)
     pbi = df.loc[df['Type'] == 'Biform']['Type'].count() / float(ntotal)
     ptri = df.loc[df['Type'] == 'Triform']['Type'].count() / float(ntotal)
     pmulti = df.loc[df['Type'] == 'Multiform']['Type'].count() / float(ntotal)
     
-    stats = [['NotExpressed', 'Monoform', 'Biform', 'Triform', 'Multiform'], [pnexp, pmono, pbi, ptri, pmulti]]
+    stats = [['NotExpressed', 'FewSamples', 'Monoform', 'Biform', 'Triform', 'Multiform'], [pnexp, pfew, pmono, pbi, ptri, pmulti]]
     
     fig, ax = plt.subplots()
     ntypes = len(stats[1])    
@@ -356,14 +365,15 @@ def stats_barplot(csv_file = 'classif_genes_90.0_70.0.csv', tissue_name = 'Tissu
     
     return stats
 
-def notexp_stats(csv_file = 'classif_genes_90.0_70.0.csv', tissue_name = 'Tissue'):
+def notexp_stats(csv_file = 'classif_genes_90.0_70.0_10.csv', tissue_name = 'Tissue'):
     df = pd.read_csv(csv_file)
     ntotal = df['Type'].count()
     
     expr = df.loc[df['Type'] != 'NotExpressed']['Type'].count() / float(ntotal)
+    pfew = df.loc[df['Type'] == 'FewSamples']['Type'].count() / float(ntotal)
     notexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count() / float(ntotal)
     
-    stats = [['Expressed', 'NotExpressed'], [expr, notexp]]
+    stats = [['Expressed', 'FewSamples', 'NotExpressed'], [expr, pfew, notexp]]
     
     fig1, ax1 = plt.subplots()
     ax1.pie(stats[1], labels = stats[0], autopct = '%1.1f%%', shadow = True, startangle = 0)
@@ -373,7 +383,7 @@ def notexp_stats(csv_file = 'classif_genes_90.0_70.0.csv', tissue_name = 'Tissue
     
     return stats
 
-def statistics(csv_file = 'classif_genes_90.0_70.0.csv', tissue_name = 'Tissue'):
+def statistics(csv_file = 'classif_genes_90.0_70.0_10.csv', tissue_name = 'Tissue'):
     df = pd.read_csv(csv_file)
     nmono = df.loc[df['Type'] == 'Monoform']['Type'].count()
     nbi = df.loc[df['Type'] == 'Biform']['Type'].count()

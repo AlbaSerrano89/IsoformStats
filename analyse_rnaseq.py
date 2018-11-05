@@ -9,14 +9,14 @@ Created on Mon Oct 29 17:01:31 2018
 import argparse
 import Functions
 
-#if __name__ == "__main__":
 parser = argparse.ArgumentParser()
 
 parser.add_argument("data", help = "A csv or gzip file with the data you want to analyse.")
 parser.add_argument("--gene", dest = "gene", required = False, help = "The gene to analyse.")
 parser.add_argument("--outfile", dest = "outfile", required = False, help = "The name of the bigsummary file.")
-parser.add_argument("--threshold", dest = "thres", required = False, help = "A threshold used to put the least expressed isoform as 'other'.")
+parser.add_argument("--threshold1", dest = "thres1", required = False, help = "A threshold used to put the least expressed isoform as 'other'.")
 parser.add_argument("--threshold2", dest = "thres2", required = False, help = "A second threshold, in this case, to select the most significative isoforms.")
+parser.add_argument("--threshold3", dest = "thres3", required = False, help = "A third threshold, in this case, to determine the minimum of samples to take a gene into account.")
 parser.add_argument("--tissuefile", dest = "tissuefile", required = False, help = "The name of the bigsummary file.")
 parser.add_argument("--tissue", dest = "tissue", required = False, help = "The tissue of the data.")
 
@@ -42,8 +42,9 @@ stats = args.stats
 gene = args.gene
 outfile = args.outfile
 tissuefile = args.tissuefile
-thres = args.thres
+thres1 = args.thres1
 thres2 = args.thres2
+thres3 = args.thres3
 tissue = args.tissue
 
 DATA = Functions.reading_data(data)
@@ -73,8 +74,8 @@ elif pieplot != None:
         except ValueError:
             gene1 = gene
     
-        if thres != None:
-            thres1 = float(thres)
+        if thres1 != None:
+            thres1 = float(thres1)
         else:
             thres1 = 0.9
             
@@ -94,8 +95,8 @@ elif stackedbarplot != None:
         except ValueError:
             gene1 = gene
     
-        if thres != None:
-            thres1 = float(thres)
+        if thres1 != None:
+            thres1 = float(thres1)
         else:
             thres1 = 0.9
         
@@ -107,24 +108,29 @@ elif stackedbarplot != None:
         parser.error("You have to specify the gene name or the gene position in your list of genes.")
     
 elif bigsummary != None:
-    # python analyse_rnaseq.py csv_file -BS '--threshold thres' '--threshold2 thres2' '--outfile bigsummary_filename'
+    # python analyse_rnaseq.py csv_file -BS '--threshold thres' '--threshold2 thres2' '--threshold3 thres3' '--outfile bigsummary_filename'
     # BS = dataframe with a summary of the classification of all the genes: NotExpressed, Mono, Bi, Tri or Multi?
-    if thres != None:
-        thres1 = float(thres)
+    if thres1 != None:
+        thres1 = float(thres1)
     else:
         thres1 = 0.9
 
     if thres2 != None:
-        thres3 = float(thres2)
+        thres2 = float(thres2)
     else:
-        thres3 = 0.7
+        thres2 = 0.7
+    
+    if thres3 != None:
+        thres3 = float(thres3)
+    else:
+        thres3 = 10
     
     if outfile != None:
         filename = outfile
     else:
         filename = 'classif_genes_'
     
-    Functions.big_summary(DATA, thres1, thres3, filename)
+    Functions.big_summary(DATA, thres1, thres2, thres3, filename)
 
 if sum_bar != None:
     # python analyse_rnaseq.py csv_file -SB '--tissuefile bigsummary_filename' '--tissue tissue_name'
@@ -132,7 +138,7 @@ if sum_bar != None:
     if tissuefile != None:
         filename = tissuefile
     else:
-        filename = 'classif_genes_90.0_70.0.csv'
+        filename = 'classif_genes_90.0_70.0_10.csv'
     
     if tissue != None:
         tissue1 = tissue
@@ -150,7 +156,7 @@ elif expr_sum != None:
     if tissuefile != None:
         filename = tissuefile
     else:
-        filename = 'classif_genes_90.0_70.0.csv'
+        filename = 'classif_genes_90.0_70.0_10.csv'
     
     if tissue != None:
         tissue1 = tissue
@@ -168,7 +174,7 @@ elif stats != None:
     if tissuefile != None:
         filename = tissuefile
     else:
-        filename = 'classif_genes_90.0_70.0.csv'
+        filename = 'classif_genes_90.0_70.0_10.csv'
     
     if tissue != None:
         tissue1 = tissue
