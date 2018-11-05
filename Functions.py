@@ -13,9 +13,6 @@ import gzip
 def reading_data(csv_file):
     Data = dict()
     with gzip.open(csv_file) if csv_file.endswith('gz') else open(csv_file) as rd:
-        #data = rd.read() # pfile.read()
-        #pfile.close()
-        
         nsamps = 0
         samp_names = ''
         
