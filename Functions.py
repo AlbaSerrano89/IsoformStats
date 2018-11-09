@@ -5,13 +5,29 @@ Created on Fri Oct 19 12:06:44 2018
 
 @author: aserrano
 """
+import os
+import gzip
 import numpy
 import matplotlib.pyplot as plt
 import pandas as pd
-import gzip
 
 def reading_data(csv_file):
     Data = dict()
+    
+    lastbar = csv_file.rfind('/')
+    file = csv_file[(lastbar + 1):]
+    if file.startswith('SMTS_'):
+        ni = 5
+    elif file.startswith('SMTSD_'):
+        ni = 6
+    
+    if file.endswith('gz'):
+        nf = -7
+    elif file.endswith('csv'):
+        nf = -4
+    
+    tissue = file[ni:nf]
+    
     with gzip.open(csv_file, 'rt') if csv_file.endswith('gz') else open(csv_file) as rd:
         nsamps = 0
         samp_names = ''
@@ -43,7 +59,7 @@ def reading_data(csv_file):
                     tmp.append([ff[0], tuple(samps), tuple(nums)])
                     Data[gene_id] = tmp
 
-    return([Data.keys(), Data, nsamps, samp_names])
+    return([Data.keys(), Data, tissue])
 
 def formatting_gene(all_data, gene):
     genes = list(all_data[0])
@@ -60,39 +76,6 @@ def formatting_gene(all_data, gene):
     
     return(gene2)
 
-def general_view(all_data, gene):
-    gene2 = formatting_gene(all_data, gene)
-    genes = list(all_data[0])
-    
-    if gene2 in genes:
-        dat = all_data[1]
-        samp_names = dat[gene2][0][1]
-        nsamps = len(samp_names)
-        
-        if nsamps == 0:
-            return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
-        else:
-            n_isos = len(dat[gene2])
-            lim = (n_isos - 1) / 2.0
-            ind = numpy.arange(nsamps)
-            
-            fig, ax = plt.subplots()
-            width = 0.75
-            
-            for i in range(0, n_isos):
-                info_gene = dat[gene2][i]
-                ax.bar(ind + (i - lim) * width / float(n_isos), info_gene[2], width / float(n_isos), label = info_gene[0])
-        
-            ax.set_ylabel('Proportion')
-            ax.set_title('Distribution of samples of the gene ' + gene2)
-            ax.set_xticks(ind)
-            ax.set_xticklabels(samp_names, rotation = 'vertical', fontsize = 8)
-            ax.legend()
-            plt.subplots_adjust(bottom = 0.2, top = 0.9)
-            plt.show()
-    else:
-        return(gene2)
-
 def total_prop(all_data, gene):
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
@@ -103,7 +86,7 @@ def total_prop(all_data, gene):
         nsamps = len(samp_names)
         
         if nsamps == 0:
-            return(['The gene ' + gene2 + ' is not expressed in any of the analysed samples.'])
+            return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
         else:
             list_props = []
             Proportions = {}
@@ -118,6 +101,8 @@ def total_prop(all_data, gene):
         return(gene2)
 
 def summarized_props(all_data, gene, thres = 0.9):
+    thres = float(thres)
+    
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
         
@@ -154,12 +139,290 @@ def summarized_props(all_data, gene, thres = 0.9):
                         final_props = [iso_props[0:(ind_thres + 1)], ['other', rem]]
         
             return(final_props)
-        elif type(gene_props) == list:
-            return(gene_props[0])
+        else:
+            return(gene_props)
+    else:
+        return(gene2)
+
+def isoform_stats(all_data, gene, thres = 0.9, thres2 = 0.7):
+    thres = float(thres)
+    thres2 = float(thres2)
+    
+    gene2 = formatting_gene(all_data, gene)
+    genes = list(all_data[0])
+    
+    if gene2 in genes:
+        gene_props = summarized_props(all_data, gene, thres)
+        
+        if 'not expressed' in gene_props:
+            return(gene_props)
+        else:
+            if (len(gene_props) == 2 and gene_props[1][0] == 'other') or (len(gene_props) == 1):
+                keeped_isos = gene_props[0]
+            else:
+                keeped_isos = gene_props
+            
+            isos = [keeped_isos[0][0]]
+            values = [keeped_isos[0][1]]
+            acum = [keeped_isos[0][1]]
+            for i in range(1, len(keeped_isos)):
+                isos.append(keeped_isos[i][0])
+                values.append(keeped_isos[i][1])
+                acum.append(acum[i - 1] + keeped_isos[i][1])
+            
+            total = acum[-1]
+            new_prop = []
+            for num in acum:
+                new_num = num / float(total)
+                new_prop.append(new_num)
+
+            return([isos, values, acum, new_prop])
+    else:
+        return(gene2)
+
+def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7, thres3 = 2):
+    thres = float(thres)
+    thres2 = float(thres2)
+    thres3 = int(thres3)
+    
+    gene2 = formatting_gene(all_data, gene)
+    genes = list(all_data[0])
+    
+    if gene2 in genes:
+        isos_stats = isoform_stats(all_data, gene, thres, thres2)
+        
+        Types = {}
+        if 'not expressed' in isos_stats:
+            tog = 'NotExpressed'
+            isos = '-'
+            stats = '-'
+        else:
+            dat = all_data[1]
+            samp_names = dat[gene2][0][1]
+            nsamps = len(samp_names)
+        
+            if nsamps < thres3:
+                tog = 'FewSamples'
+                isos = '-'
+                stats = '-'
+            else:
+                i = 0
+                while isos_stats[3][i] < thres2:
+                    i += 1
+                
+                if i == 0:
+                    tog = 'Monoform'
+                elif i == 1:
+                    tog = 'Biform'
+                elif i == 2:
+                    tog = 'Triform'
+                else:
+                    tog = 'Multiform'
+            
+                isos = isos_stats[0][:(i + 1)]
+                stats = isos_stats[1][:(i + 1)]
+        
+        Types[gene2] = [tog, isos, stats]
+        return(Types)
+    else:
+        return(gene2)
+
+def big_summary(all_data, thres = 0.9, thres2 = 0.7, thres3 = 10, bstissuefile = '_genes_'):
+    thres = float(thres)
+    thres2 = float(thres2)
+    thres3 = int(thres3)
+    
+    tissue = all_data[2]
+    
+    all_types = {}
+    for i in range(0, len(all_data[0])):
+        res = type_of_gene(all_data, i, thres, thres2, thres3)
+        all_types.update(res)
+    
+    df = pd.DataFrame(all_types, index = ['Type', 'Isoforms', 'IsoformsProportion'], dtype = 'category')
+    df = df.T
+    
+    if bstissuefile != '_genes_':
+        bstissuefile = bstissuefile
+    else:
+        bstissuefile = tissue + bstissuefile + str(thres * 100) + '_' + str(thres2 * 100) + '_' + str(thres3) + '.csv'
+    
+    df.to_csv(bstissuefile)
+
+def statistics(all_data, bstissuefile, tissuestatsfile = '_statistics.csv', dffile = 'T'):
+    df = pd.read_csv(bstissuefile)
+    
+    nnexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count()
+    nfew = df.loc[df['Type'] == 'FewSamples']['Type'].count()
+    nmono = df.loc[df['Type'] == 'Monoform']['Type'].count()
+    nbi = df.loc[df['Type'] == 'Biform']['Type'].count()
+    ntri = df.loc[df['Type'] == 'Triform']['Type'].count()
+    nmulti = df.loc[df['Type'] == 'Multiform']['Type'].count()
+    numbs = [nnexp, nfew, nmono, nbi, ntri, nmulti]
+    
+    ntotal = sum(numbs)
+    
+    pnexp = nnexp / float(ntotal)
+    pfew = nfew / float(ntotal)
+    pmono = nmono / float(ntotal)
+    pbi = nbi / float(ntotal)
+    ptri = ntri / float(ntotal)
+    pmulti = nmulti / float(ntotal)
+    props = [pnexp, pfew, pmono, pbi, ptri, pmulti]
+    
+    types = ['NotExpressed', 'FewSamples', 'Monoform', 'Biform', 'Triform', 'Multiform']
+    
+    stats = {}
+    for i in range(0, len(types)):
+        stats[types[i]] = [numbs[i], props[i]]
+    
+    if dffile == 'T':
+        df = pd.DataFrame(stats, index = ['Counts', 'Typeform'])
+        df = df.T
+        
+        if tissuestatsfile != '_statistics.csv':
+            tissuestatsfile = tissuestatsfile
+        else:
+            tissue = all_data[2]
+            tissuestatsfile = tissue + tissuestatsfile
+        
+        df.to_csv(tissuestatsfile)
+    elif dffile == 'F':
+        return(stats)
+    else:
+        print(dffile + 'is not an acceptable option for --dffile.')
+
+def all_tissues_analysis(original_dir, pref = '', new_dir = '', thres = 0.9, thres2 = 0.7, thres3 = 10):
+    thres = float(thres)
+    thres2 = float(thres2)
+    thres3 = int(thres3)
+    
+    if pref != '':
+        pref = pref + '_'
+    
+    if new_dir == '':
+        bsumm_dir = original_dir + pref + 'big_summaries'
+    else:
+        bsumm_dir = new_dir
+    
+    os.mkdir(bsumm_dir)
+    os.chdir(original_dir)
+    
+    nfiles = 0
+    for file in os.listdir():
+        if file.startswith(pref) and file.endswith('gz'):
+            nfiles += 1
+    
+    print('There are ' + str(nfiles) + ' tissues to analyse.\n')
+    
+    i = 0
+    for file in os.listdir():
+        if pref != '':
+            print("pref != ''")
+            if pref == 'SMTS_':
+                ni = 5
+            elif pref == 'SMTSD_':
+                ni = 6
+            
+            if file.endswith('gz'):
+                nf = -7
+            elif file.endswith('csv'):
+                nf = -4
+            
+            if file.startswith(pref) and file.endswith('gz'):
+                tissuepath = original_dir + file
+                tissue = file[ni:nf]
+                
+                DATA = reading_data(tissuepath)
+                
+                os.chdir(bsumm_dir)
+                big_summary(DATA, thres, thres2, thres3, filename = 'BS_' + tissue + '.csv')
+                
+                os.chdir(original_dir)
+                
+                i += 1
+                print(str(i) + '.- Big summary of the tissue ' + tissue + ': done.')
+        else:
+            tissuepath = original_dir + file
+            tissue = file[:-3]
+            
+            DATA = reading_data(tissuepath)
+            
+            os.chdir(bsumm_dir)
+            big_summary(DATA, thres, thres2, thres3, filename = 'BS_' + tissue + '.csv')
+            
+            os.chdir(original_dir)
+        
+            i += 1
+            print(str(i[0]) + '.- Big summary of the tissue ' + tissue + ': done.')
+
+def all_tissues_stats(bigsummaries_dir, allstats_file = 'all_tissues_statistics.csv'):
+#    new_dir = bigsummaries_dir + 'Statistics'
+#    os.mkdir(new_dir)
+    
+    types = ['NotExpressed', 'FewSamples', 'Monoform', 'Biform', 'Triform', 'Multiform']
+    
+    stats = {}
+    for file in os.listdir(bigsummaries_dir):
+        if file != 'Statistics':
+            df = pd.read_csv(bigsummaries_dir + file, engine='python')
+            tissue = file[3:-4]
+            
+            nnexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count()
+            nfew = df.loc[df['Type'] == 'FewSamples']['Type'].count()
+            nmono = df.loc[df['Type'] == 'Monoform']['Type'].count()
+            nbi = df.loc[df['Type'] == 'Biform']['Type'].count()
+            ntri = df.loc[df['Type'] == 'Triform']['Type'].count()
+            nmulti = df.loc[df['Type'] == 'Multiform']['Type'].count()
+            numbs = [nnexp, nfew, nmono, nbi, ntri, nmulti]
+            
+            stats[tissue] = numbs
+    
+    df = pd.DataFrame(stats, index = types)
+    df = df.T
+    df.to_csv(allstats_file)
+
+
+
+
+
+# ----------------------------------------------- PLOTS ----------------------------------------------- #
+def general_view(all_data, gene):
+    gene2 = formatting_gene(all_data, gene)
+    genes = list(all_data[0])
+    
+    if gene2 in genes:
+        dat = all_data[1]
+        samp_names = dat[gene2][0][1]
+        nsamps = len(samp_names)
+        
+        if nsamps == 0:
+            return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
+        else:
+            n_isos = len(dat[gene2])
+            lim = (n_isos - 1) / 2.0
+            ind = numpy.arange(nsamps)
+            
+            fig, ax = plt.subplots()
+            width = 0.75
+            
+            for i in range(0, n_isos):
+                info_gene = dat[gene2][i]
+                ax.bar(ind + (i - lim) * width / float(n_isos), info_gene[2], width / float(n_isos), label = info_gene[0])
+        
+            ax.set_ylabel('Proportion')
+            ax.set_title('Distribution of samples of the gene ' + gene2)
+            ax.set_xticks(ind)
+            ax.set_xticklabels(samp_names, rotation = 'vertical', fontsize = 8)
+            ax.legend()
+            plt.subplots_adjust(bottom = 0.2, top = 0.9)
+            plt.show()
     else:
         return(gene2)
 
 def pie_plot(all_data, gene, thres = 0.9):
+    thres = float(thres)
+    
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
         
@@ -188,7 +451,7 @@ def pie_plot(all_data, gene, thres = 0.9):
                 
             fig1, ax1 = plt.subplots()
             
-            ax1.pie(final_props, labels = final_isos, autopct = '%1.1f%%', shadow = True, startangle = 0)
+            ax1.pie(final_props, labels = final_isos, autopct = '%.2f%%', shadow = True, startangle = 0)
             ax1.set_title('Distribution of samples of the gene ' + gene2)
             ax1.axis('equal')
             plt.show()
@@ -196,6 +459,8 @@ def pie_plot(all_data, gene, thres = 0.9):
         return(gene2)
 
 def stacked_barplot(all_data, gene, thres = 0.9):
+    thres = float(thres)
+    
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
     
@@ -242,169 +507,162 @@ def stacked_barplot(all_data, gene, thres = 0.9):
     else:
         return(gene2)
 
-def isoform_stats(all_data, gene, thres = 0.9, thres2 = 0.7):
-    gene2 = formatting_gene(all_data, gene)
-    genes = list(all_data[0])
+def stats_barplot(all_data, csv_file):
+    stats = statistics(all_data, csv_file, dffile = 'F')
+    tissue = all_data[2]
     
-    if gene2 in genes:
-        gene_props = summarized_props(all_data, gene, thres)
-        
-        if 'not expressed' in gene_props:
-            return(gene_props)
-        else:
-            if (len(gene_props) == 2 and gene_props[1][0] == 'other') or (len(gene_props) == 1):
-                keeped_isos = gene_props[0]
-            else:
-                keeped_isos = gene_props
-            
-            isos = [keeped_isos[0][0]]
-            values = [keeped_isos[0][1]]
-            acum = [keeped_isos[0][1]]
-            for i in range(1, len(keeped_isos)):
-                isos.append(keeped_isos[i][0])
-                values.append(keeped_isos[i][1])
-                acum.append(acum[i - 1] + keeped_isos[i][1])
-            
-            total = acum[-1]
-            new_prop = []
-            for num in acum:
-                new_num = num / float(total)
-                new_prop.append(new_num)
-
-            return([isos, values, acum, new_prop])
-    else:
-        return(gene2)
-
-def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7, thres3 = 2):
-    gene2 = formatting_gene(all_data, gene)
-    genes = list(all_data[0])
+    types = list(stats.keys())
     
-    if gene2 in genes:
-        isos_stats = isoform_stats(all_data, gene, thres, thres2)
-        
-        Types = {}
-        if 'not expressed' in isos_stats:
-            tog = 'NotExpressed'
-            isos = '-'
-            stats = '-'
-        else:
-            dat = all_data[1]
-            samp_names = dat[gene2][0][1]
-            nsamps = len(samp_names)
-        
-            if nsamps < thres3:
-                tog = 'FewSamples'
-                isos = '-'
-                stats = '-'
-            else:
-                i = 0
-                while isos_stats[3][i] < thres2:
-                    i += 1
-                
-                if i == 0:
-                    tog = 'Monoform'
-                elif i == 1:
-                    tog = 'Biform'
-                elif i == 2:
-                    tog = 'Triform'
-                else:
-                    tog = 'Multiform'
-            
-                isos = isos_stats[0][:(i + 1)]
-                stats = isos_stats[1][:(i + 1)]
-        
-        Types[gene2] = [tog, isos, stats]
-        return(Types)
-    else:
-        return(gene2)
-
-def big_summary(all_data, thres = 0.9, thres2 = 0.7, thres3 = 10, filename = 'classif_genes_'):
-    all_types = {}
-    for i in range(0, len(all_data[0])):
-        res = type_of_gene(all_data, i, thres, thres2, thres3)
-        all_types.update(res)
+    numbs = []
+    props = []
+    for value in stats.values():
+        numbs.append(int(value[0]))
+        props.append(float(value[1]))
     
-    df = pd.DataFrame(all_types, index = ['Type', 'Isoforms', 'IsoformsProportion'], dtype = "category")
-    df = df.T
+    labs = []
+    for i in range(0, len(types)):
+        labs.append(types[i] + ': ' + str(numbs[i]))
     
-    if filename != 'classif_genes_':
-        filename1 = filename
-    else:
-        filename1 = filename + str(thres * 100) + '_' + str(thres2 * 100) + '_' + str(thres3) + '.csv'
-    
-    df.to_csv(filename1)
-    return(df)
-
-def stats_barplot(csv_file = 'classif_genes_90.0_70.0_10.csv', tissue_name = 'Tissue'):
-    df = pd.read_csv(csv_file)
-    ntotal = df['Type'].count()
-    
-    pnexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count() / float(ntotal)
-    pfew = df.loc[df['Type'] == 'FewSamples']['Type'].count() / float(ntotal)
-    pmono = df.loc[df['Type'] == 'Monoform']['Type'].count() / float(ntotal)
-    pbi = df.loc[df['Type'] == 'Biform']['Type'].count() / float(ntotal)
-    ptri = df.loc[df['Type'] == 'Triform']['Type'].count() / float(ntotal)
-    pmulti = df.loc[df['Type'] == 'Multiform']['Type'].count() / float(ntotal)
-    
-    stats = [['NotExpressed', 'FewSamples', 'Monoform', 'Biform', 'Triform', 'Multiform'], [pnexp, pfew, pmono, pbi, ptri, pmulti]]
+    ntypes = len(stats)
+    acum = props[0]
+    colors = ['C0', 'C9', 'C1', 'C2', 'C3', 'C5']
     
     fig, ax = plt.subplots()
-    ntypes = len(stats[1])    
-    acum = stats[1][0]
-    ax.bar(1, acum, 1, label = stats[0][0])
+    ax.bar(1, props[0], 1, label = labs[0], color = colors[0])
     for i in range(1, ntypes):
-        ax.bar(1, stats[1][i], 1, bottom = acum, label = stats[0][i])
-        acum =  acum + stats[1][i]
+        ax.bar(1, props[i], 1, bottom = acum, label = labs[i], color = colors[i])
+        acum =  acum + props[i]
     
     ax.set_ylabel('Proportion')
-    ax.set_title('Isoform distribution of ' + tissue_name)
+    ax.set_title('Isoform distribution of ' + tissue)
     ax.set_xticks([0])
     ax.legend()
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
     plt.show()
-    
-    return stats
 
-def notexp_stats(csv_file = 'classif_genes_90.0_70.0_10.csv', tissue_name = 'Tissue'):
-    df = pd.read_csv(csv_file)
-    ntotal = df['Type'].count()
+def notexp_pie(all_data, csv_file):
+    stats = statistics(all_data, csv_file, dffile = 'F')
+    tissue = all_data[2]
     
-    expr = df.loc[df['Type'] != 'NotExpressed']['Type'].count() / float(ntotal)
-    pfew = df.loc[df['Type'] == 'FewSamples']['Type'].count() / float(ntotal)
-    notexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count() / float(ntotal)
+    numbs = []
+    props = []
+    for value in stats.values():
+        numbs.append(int(value[0]))
+        props.append(float(value[1]))
     
-    stats = [['Expressed', 'FewSamples', 'NotExpressed'], [expr, pfew, notexp]]
+    ini_types = list(stats.keys())
+    types = ini_types[0:2]
+    types.append('Expressed')
+    
+    new_numbs = [numbs[0], numbs[1], sum(numbs[2:])]
+    labs = []
+    for i in range(0, len(types)):
+        labs.append(types[i] + ': ' + str(new_numbs[i]))
+    
+    new_props = [props[0], props[1], sum(props[2:])]
     
     fig1, ax1 = plt.subplots()
-    ax1.pie(stats[1], labels = stats[0], autopct = '%1.1f%%', shadow = True, startangle = 0)
-    ax1.set_title('Isoform distribution of ' + tissue_name + '\nExpressed and not expressed isoforms')
+    colors = ['C0', 'C9', 'C6']
+    ax1.pie(new_props, labels = labs, autopct = '%1.1f%%', shadow = True, startangle = 0, colors = colors)
+    ax1.set_title('Isoform distribution of ' + tissue + '\nExpressed and not expressed isoforms')
     ax1.axis('equal')
     plt.show()
-    
-    return stats
 
-def statistics(csv_file = 'classif_genes_90.0_70.0_10.csv', tissue_name = 'Tissue'):
-    df = pd.read_csv(csv_file)
-    nmono = df.loc[df['Type'] == 'Monoform']['Type'].count()
-    nbi = df.loc[df['Type'] == 'Biform']['Type'].count()
-    ntri = df.loc[df['Type'] == 'Triform']['Type'].count()
-    nmulti = df.loc[df['Type'] == 'Multiform']['Type'].count()
-    ntotal = nmono + nbi + ntri + nmulti
+def expr_pie(all_data, csv_file):
+    stats = statistics(all_data, csv_file, dffile = 'F')
+    tissue = all_data[2]
     
-    pmono = nmono / float(ntotal)
-    pbi = nbi / float(ntotal)
-    ptri = ntri / float(ntotal)
-    pmulti = nmulti / float(ntotal)
+    numbs = []
+    props = []
+    for value in stats.values():
+        numbs.append(int(value[0]))
+        props.append(float(value[1]))
     
-    stats = [['Monoform', 'Biform', 'Triform', 'Multiform'], [pmono, pbi, ptri, pmulti]]
+    types = list(stats.keys())[2:]
+    new_numbs = numbs[2:]
+    labs = []
+    for i in range(0, len(types)):
+        labs.append(types[i] + ': ' + str(new_numbs[i]))
+    
+    new_total = sum(new_numbs)
+    new_props = []
+    for numb in new_numbs:
+        new_prop = numb / float(new_total)
+        new_props.append(new_prop)
+    
+    colors = ['C1', 'C2', 'C3', 'C5']
     
     fig1, ax1 = plt.subplots()
-    ax1.pie(stats[1], labels = stats[0], autopct = '%1.1f%%', shadow = True, startangle = 0)
-    ax1.set_title('Isoform distribution of ' + tissue_name + '\nExpressed isoforms')
+    ax1.pie(new_props, labels = labs, autopct = '%1.1f%%', shadow = True, startangle = 0, colors = colors)
+    ax1.set_title('Isoform distribution of ' + tissue + '\nExpressed isoforms')
     ax1.axis('equal')
     plt.show()
-    
-    return stats
+
+#def all_tissues_barplot(stats_filename = 'tissues_statistics.csv'):
+#    df = pd.read_csv(stats_filename)
+#    total_col = list(df['TOTAL'])
+#    df = df.drop('TOTAL', 1)
+#    
+#    cols = []
+#    for col in df:
+#        cols.append(col)
+#    
+#    rows = []
+#    for index, row in df.iterrows():
+#        rows.append(index)
+#    
+#    ncols = len(cols)
+#    ind = numpy.arange(df.count()[0])
+#    
+#    fig, ax = plt.subplots()
+#    width = 0.5
+#    
+#    for i in range(0, ncols):
+#        df[cols[i]]
+#        newList = [x / myInt for x in myList]
+#    
+#    
+#    
+#    
+#    acum_vect = list(df[cols[0]])
+#    
+#        
+#    ax.barh(ind, acum_vect, width, label = cols[0])
+#    for i in range(1, ncols):
+#        ax.barh(ind, list(df[cols[i]]), width, left = acum_vect, label = cols[i])
+#        acum_vect = tuple(sum(x) for x in zip(acum_vect, list(df[cols[i]])))
+#    
+#    ax.set_ylabel('Tissues')
+#    ax.set_title('Counts of the analysis')
+#    ax.set_yticks(ind)
+#    ax.set_yticklabels(rows, fontsize = 8)
+#    ax.legend()
+#    plt.subplots_adjust(bottom = 0.2, top = 0.9)
+#    plt.show()
+#    
+#
+#
+#
+#
+#colums = []
+#for col in dataf:
+#    colums.append(col)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ----------------------------------------------- TEC analysis ----------------------------------------------- #
 
 def getting_interactions(all_data):
     data_interactions = {}
