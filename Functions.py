@@ -76,6 +76,24 @@ def formatting_gene(all_data, gene):
     
     return(gene2)
 
+def gene_info(all_data, gene, ncols = 10):
+    gene2 = formatting_gene(all_data, gene)
+    genes = list(all_data[0])
+        
+    if gene2 in genes:
+        print('Data of the gene: ' + gene2)
+        
+        gene_info = {}
+        for iso_info in all_data[1][gene2]:
+            gene_info[iso_info[0]] = iso_info[2]
+        
+        df = pd.DataFrame(gene_info, index = (iso_info[1]))
+        df = df.T
+        pd.set_option('max_columns', ncols)
+        return(df)
+    else:
+        return(gene2)
+
 def total_prop(all_data, gene):
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
@@ -357,9 +375,6 @@ def all_tissues_analysis(original_dir, pref = '', new_dir = '', thres = 0.9, thr
             print(str(i[0]) + '.- Big summary of the tissue ' + tissue + ': done.')
 
 def all_tissues_stats(bigsummaries_dir, allstats_file = 'all_tissues_statistics.csv'):
-#    new_dir = bigsummaries_dir + 'Statistics'
-#    os.mkdir(new_dir)
-    
     types = ['NotExpressed', 'FewSamples', 'Monoform', 'Biform', 'Triform', 'Multiform']
     
     stats = {}
@@ -598,55 +613,52 @@ def expr_pie(all_data, csv_file):
     ax1.axis('equal')
     plt.show()
 
-#def all_tissues_barplot(stats_filename = 'tissues_statistics.csv'):
-#    df = pd.read_csv(stats_filename)
-#    total_col = list(df['TOTAL'])
-#    df = df.drop('TOTAL', 1)
-#    
-#    cols = []
-#    for col in df:
-#        cols.append(col)
-#    
-#    rows = []
-#    for index, row in df.iterrows():
-#        rows.append(index)
-#    
-#    ncols = len(cols)
-#    ind = numpy.arange(df.count()[0])
-#    
-#    fig, ax = plt.subplots()
-#    width = 0.5
-#    
-#    for i in range(0, ncols):
-#        df[cols[i]]
-#        newList = [x / myInt for x in myList]
-#    
-#    
-#    
-#    
-#    acum_vect = list(df[cols[0]])
-#    
-#        
-#    ax.barh(ind, acum_vect, width, label = cols[0])
-#    for i in range(1, ncols):
-#        ax.barh(ind, list(df[cols[i]]), width, left = acum_vect, label = cols[i])
-#        acum_vect = tuple(sum(x) for x in zip(acum_vect, list(df[cols[i]])))
-#    
-#    ax.set_ylabel('Tissues')
-#    ax.set_title('Counts of the analysis')
-#    ax.set_yticks(ind)
-#    ax.set_yticklabels(rows, fontsize = 8)
-#    ax.legend()
-#    plt.subplots_adjust(bottom = 0.2, top = 0.9)
-#    plt.show()
-#    
-#
-#
-#
-#
-#colums = []
-#for col in dataf:
-#    colums.append(col)
+def all_tissues_barplot(stats_filename = 'all_tissues_statistics.csv'):
+    df1 = pd.read_csv(stats_filename, index_col = 0)
+    df2 = df1.T
+    
+    types = list(df1.columns)
+    tissues = list(df2.columns)
+    
+    total_col = {}
+    for tissue in tissues:
+        total_col[tissue] = sum(df2[tissue])
+    
+    props_dict = {}
+    for tissue in tissues:
+        props_tiss = []
+        for numbs in list(df2[tissue]):
+            props_tiss.append(numbs / total_col[tissue])
+        
+        props_dict[tissue] = props_tiss
+    
+    props_df1 = pd.DataFrame(props_dict, index = types)
+    props_df2 = props_df1.T
+    
+    fig, ax = plt.subplots()
+    ind = numpy.arange(len(tissues))
+    width = 0.5
+    colors = ['C0', 'C9', 'C1', 'C2', 'C3', 'C5']
+    
+    props_vect = []
+    for typegene in types:
+        props_vect.append(list(props_df2[typegene]))
+    
+    acum_vect = props_vect[0]
+
+    ax.barh(ind, props_vect[0], width, label = types[0], color = colors[0])
+    for i in range(1, len(types)):
+        ax.barh(ind, props_vect[i], width, left = acum_vect, label = types[i], color = colors[i])
+        acum_vect = tuple(sum(x) for x in zip(acum_vect, props_vect[i]))
+    
+    ax.set_xlabel('Proportion')
+    ax.set_ylabel('Tissues')
+    ax.set_title('Counts of the analysis')
+    ax.set_yticks(ind)
+    ax.set_yticklabels(tissues, fontsize = 8)
+    ax.legend()
+    plt.subplots_adjust(bottom = 0.2, top = 0.9)
+    plt.show()
 
 
 
