@@ -97,7 +97,10 @@ def gene_info(all_data, gene, ncols = 10):
 def total_prop(all_data, gene):
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
-        
+    
+    def takeSecond(elem):
+        return elem[1]
+    
     if gene2 in genes:
         dat = all_data[1]
         samp_names = dat[gene2][0][1]
@@ -111,6 +114,16 @@ def total_prop(all_data, gene):
             for iso, samps, props in dat[gene2]:
                 iso_prop = sum(props) / float(nsamps)
                 list_props.append([iso, iso_prop])
+                
+            list_props.sort(reverse = True, key = takeSecond)
+            
+            acum = 0
+            for i in range(0, len(list_props)):
+                acum = acum + list_props[i][1]
+                if acum < 1:
+                    list_props[i].append(acum)
+                else:
+                    list_props[i].append(1.0)
             
             Proportions[gene2] = list_props
             
@@ -118,7 +131,7 @@ def total_prop(all_data, gene):
     else:
         return(gene2)
 
-def summarized_props(all_data, gene, thres = 0.9):
+def summarized_props(all_data, gene, thres = 0.1):
     thres = float(thres)
     
     gene2 = formatting_gene(all_data, gene)
@@ -128,41 +141,31 @@ def summarized_props(all_data, gene, thres = 0.9):
         gene_props = total_prop(all_data, gene)
         
         if type(gene_props) == dict:
-            def takeSecond(elem):
-                return elem[1]
-        
-            for gene, iso_props in gene_props.items():
-                iso_props.sort(reverse = True, key = takeSecond)
-                
-                acum = [iso_props[0][1]]
-                for i in range(1, len(iso_props)):
-                    acum.append(iso_props[i][1] + acum[i - 1])
-        
-            if acum[0] == 0:
-                final_props = gene_props[gene]
-                print('This gene is not expressed in these samples.')
-            else:
-                ind_thres = numpy.searchsorted(acum, thres, side = 'right')
-                if ind_thres == len(acum):
-                    perc = round(acum[ind_thres - 1] * 100, 2)
-                    print('The expressed isoforms just explain the ' + str(perc) + '% of the gene expression of these samples.')
-                else:
-                    rem = round(1 - acum[ind_thres], 3)
-                
-                    if rem == iso_props[-1][1] and rem != 0:
-                        final_props = iso_props
-                    elif rem == 0:
-                        final_props = [iso_props[0:(ind_thres + 1)]]
-                    else:
-                        final_props = [iso_props[0:(ind_thres + 1)], ['other', rem]]
-        
-            return(final_props)
+            list_props = list(gene_props.values())[0]
+            
+            if round(list_props[-1][2], 5) != 1:
+                perc = round(list_props[-1][2] * 100, 2)
+                print('The expressed isoforms just explain the ' + str(perc) + '% of the gene expression of these samples.')
+            
+            final_props = []
+            for iso_props in list_props:
+                if iso_props[1] >= thres:
+                    final_props.append(iso_props)
+            
+            acum = final_props[-1][2]
+            rem = round(1 - acum, 3)
+            if len(list_props) != len(final_props):
+                final_props.append(['other', rem])
+            
+            Proportions = {}
+            Proportions[gene2] = final_props
+            return(Proportions)
         else:
             return(gene_props)
     else:
         return(gene2)
 
-def isoform_stats(all_data, gene, thres = 0.9, thres2 = 0.7):
+def no_other(all_data, gene, thres = 0.1, thres2 = 0.7):
     thres = float(thres)
     thres2 = float(thres2)
     
@@ -175,30 +178,25 @@ def isoform_stats(all_data, gene, thres = 0.9, thres2 = 0.7):
         if 'not expressed' in gene_props:
             return(gene_props)
         else:
-            if (len(gene_props) == 2 and gene_props[1][0] == 'other') or (len(gene_props) == 1):
-                keeped_isos = gene_props[0]
-            else:
-                keeped_isos = gene_props
+            list_props = list(gene_props.values())[0]
+            if list_props[-1][0] == 'other':
+                list_props.pop()
+                print(list_props)
             
-            isos = [keeped_isos[0][0]]
-            values = [keeped_isos[0][1]]
-            acum = [keeped_isos[0][1]]
-            for i in range(1, len(keeped_isos)):
-                isos.append(keeped_isos[i][0])
-                values.append(keeped_isos[i][1])
-                acum.append(acum[i - 1] + keeped_isos[i][1])
-            
-            total = acum[-1]
-            new_prop = []
-            for num in acum:
-                new_num = num / float(total)
-                new_prop.append(new_num)
+            total = list_props[-1][2]
+            new_list_props = []
+            for iso_props in list_props:
+                new_prop = iso_props[1] / float(total)
+                new_acum = iso_props[2] / float(total)
+                iso_props.append(new_prop)
+                iso_props.append(new_acum)
+                new_list_props.append(iso_props)
 
-            return([isos, values, acum, new_prop])
+            return(new_list_props)
     else:
         return(gene2)
 
-def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7, thres3 = 2):
+def type_of_gene(all_data, gene, thres = 0.1, thres2 = 0.7, thres3 = 10):
     thres = float(thres)
     thres2 = float(thres2)
     thres3 = int(thres3)
@@ -207,13 +205,16 @@ def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7, thres3 = 2):
     genes = list(all_data[0])
     
     if gene2 in genes:
-        isos_stats = isoform_stats(all_data, gene, thres, thres2)
+        isos_stats = no_other(all_data, gene, thres, thres2)
         
         Types = {}
         if 'not expressed' in isos_stats:
             tog = 'NotExpressed'
             isos = '-'
-            stats = '-'
+            ini_props = '-'
+            acum_props = '-'
+            new_ini_props = '-'
+            new_acum_props = '-'
         else:
             dat = all_data[1]
             samp_names = dat[gene2][0][1]
@@ -222,10 +223,13 @@ def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7, thres3 = 2):
             if nsamps < thres3:
                 tog = 'FewSamples'
                 isos = '-'
-                stats = '-'
+                ini_props = '-'
+                acum_props = '-'
+                new_ini_props = '-'
+                new_acum_props = '-'
             else:
                 i = 0
-                while isos_stats[3][i] < thres2:
+                while isos_stats[i][4] < thres2:
                     i += 1
                 
                 if i == 0:
@@ -237,15 +241,24 @@ def type_of_gene(all_data, gene, thres = 0.9, thres2 = 0.7, thres3 = 2):
                 else:
                     tog = 'Multiform'
             
-                isos = isos_stats[0][:(i + 1)]
-                stats = isos_stats[1][:(i + 1)]
+            isos = []
+            ini_props = []
+            acum_props = []
+            new_ini_props = []
+            new_acum_props = []
+            for iso_stats in isos_stats[:i+1]:
+                isos.append(iso_stats[0])
+                ini_props.append(iso_stats[1])
+                acum_props.append(iso_stats[2])
+                new_ini_props.append(iso_stats[3])
+                new_acum_props.append(iso_stats[4])
         
-        Types[gene2] = [tog, isos, stats]
+        Types[gene2] = [tog, isos, ini_props, acum_props, new_ini_props, new_acum_props]
         return(Types)
     else:
         return(gene2)
 
-def big_summary(all_data, thres = 0.9, thres2 = 0.7, thres3 = 10, bstissuefile = '_genes_'):
+def big_summary(all_data, thres = 0.1, thres2 = 0.7, thres3 = 10, bstissuefile = '_genes_'):
     thres = float(thres)
     thres2 = float(thres2)
     thres3 = int(thres3)
@@ -257,7 +270,7 @@ def big_summary(all_data, thres = 0.9, thres2 = 0.7, thres3 = 10, bstissuefile =
         res = type_of_gene(all_data, i, thres, thres2, thres3)
         all_types.update(res)
     
-    df = pd.DataFrame(all_types, index = ['Type', 'Isoforms', 'IsoformsProportion'], dtype = 'category')
+    df = pd.DataFrame(all_types, index = ['Type', 'Isoforms', 'InitialProportion', 'CumulativeProportion', 'NewProportion', 'NewCumulativeProportion'], dtype = 'category')
     df = df.T
     
     if bstissuefile != '_genes_':
@@ -415,16 +428,17 @@ def general_view(all_data, gene):
             return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
         else:
             n_isos = len(dat[gene2])
-            lim = (n_isos - 1) / 2.0
             ind = numpy.arange(nsamps)
             
             fig, ax = plt.subplots()
             width = 0.75
             
-            for i in range(0, n_isos):
-                info_gene = dat[gene2][i]
-                ax.bar(ind + (i - lim) * width / float(n_isos), info_gene[2], width / float(n_isos), label = info_gene[0])
-        
+            acum_vect = dat[gene2][0][2]
+            ax.bar(ind, dat[gene2][0][2], width, label = dat[gene2][0][0])
+            for i in range(1, n_isos):
+                ax.bar(ind, dat[gene2][i][2], width, bottom = acum_vect, label = dat[gene2][i][0])
+                acum_vect = tuple(sum(x) for x in zip(acum_vect, dat[gene2][i][2]))
+            
             ax.set_ylabel('Proportion')
             ax.set_title('Distribution of samples of the gene ' + gene2)
             ax.set_xticks(ind)

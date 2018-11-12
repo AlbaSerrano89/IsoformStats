@@ -49,7 +49,7 @@ if statsfile == None:
 if thres1 != None:
     thres1 = float(thres1)
 else:
-    thres1 = 0.9
+    thres1 = 0.1
 
 if thres2 != None:
     thres2 = float(thres2)
