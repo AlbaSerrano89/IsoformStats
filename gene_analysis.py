@@ -25,11 +25,9 @@ parser.add_argument("-GI", "--geneinfo", nargs = "*", help = "Returns the name o
 parser.add_argument("-GN", "--genenameF", nargs = "*", help = "Returns the name of the gene.")
 parser.add_argument("-TP", "--totprop", nargs = "*", help = "Returns the mean proportion of each isoform of the gene.")
 parser.add_argument("-SP", "--sumprop", nargs = "*", help = "Returns a list of the isoforms and their respective total proportions, reversed ordered by these proportions.")
-parser.add_argument("-IS", "--isofstats", nargs = "*", help = "Returns a list with different proportions for each isoform.")
 parser.add_argument("-TG", "--typegene", nargs = "*", help = "Returns a list with different proportions for each isoform.")
 
-parser.add_argument("-G", "--general", nargs = "*", help = "Returns a general view of the gene you select, using a barplot.")
-parser.add_argument("-P", "--pieplot", nargs = "*", help = "Returns a pie plot showing the isoforms of the gene you select in order of expression.")
+parser.add_argument("-G", "--general", nargs = "*", help = "Returns a general view of the gene you select, using an stacked barplot.")
 parser.add_argument("-B", "--stackedbarplot", nargs = "*", help = "Returns a stacked bar plot showing just the most expressed isoforms of the gene you select.")
 
 args = parser.parse_args()
@@ -47,11 +45,9 @@ geneinfo = args.geneinfo
 genenameF = args.genenameF
 totprop = args.totprop
 sumprop = args.sumprop
-isofstats = args.isofstats
 typegene = args.typegene
 
 general = args.general
-pieplot = args.pieplot
 stackedbarplot = args.stackedbarplot
 
 if genename == None and genepos == None:
@@ -84,7 +80,7 @@ else:
 DATA = Functions.reading_data(data)
 
 if geneinfo != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -GI '--ncols numberofcolumns'
+    # python gene_analysis.py --data csv_gz_file '--genename genename' '--genepos geneposition' -GI '--ncols numberofcolumns'
     try:
         gene = int(gene)
     except ValueError:
@@ -98,7 +94,7 @@ if geneinfo != None:
         pprint.pprint(a)
 
 elif genenameF != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -GN 
+    # python gene_analysis.py --data csv_gz_file '--genename genename' '--genepos geneposition' -GN 
     try:
         gene = int(gene)
     except ValueError:
@@ -112,7 +108,7 @@ elif genenameF != None:
         print(a)
 
 elif totprop != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -TP
+    # python gene_analysis.py --data csv_gz_file '--genename genename' '--genepos geneposition' -TP
     try:
         gene = int(gene)
     except ValueError:
@@ -126,7 +122,7 @@ elif totprop != None:
         pprint.pprint(a)
 
 elif sumprop != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -SP '--thres1 thres1'
+    # python gene_analysis.py --data csv_gz_file '--genename genename' '--genepos geneposition' -SP '--thres1 thres1'
     try:
         gene = int(gene)
     except ValueError:
@@ -139,22 +135,8 @@ elif sumprop != None:
     else:
         pprint.pprint(a)
 
-elif isofstats != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -IS '--thres1 thres1' '--thres2 thres2'
-    try:
-        gene = int(gene)
-    except ValueError:
-        gene = gene
-
-    a = Functions.isoform_stats(DATA, gene, thres1, thres2)
-    
-    if 'not expressed' in a or 'is not in your data' in a:
-        print(a)
-    else:
-        pprint.pprint(a)
-
 elif typegene != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -TG '--thres1 thres1' '--thres2 thres2' '--thres3 thres3'
+    # python gene_analysis.py --data csv_gz_file '--genename genename' '--genepos geneposition' -TG '--thres1 thres1' '--thres2 thres2' '--thres3 thres3'
     try:
         gene = int(gene)
     except ValueError:
@@ -168,7 +150,7 @@ elif typegene != None:
         pprint.pprint(a)
     
 elif general != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -G
+    # python gene_analysis.py --data csv_gz_file '--genename genename' '--genepos geneposition' -G
     try:
         gene = int(gene)
     except ValueError:
@@ -179,20 +161,8 @@ elif general != None:
     if type(a) == str:
         print(a)
     
-elif pieplot != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -P '--thres1 thres1'
-    try:
-        gene = int(gene)
-    except ValueError:
-        gene = gene
-
-    a = Functions.pie_plot(DATA, gene, thres1)
-
-    if type(a) == str:
-        print(a)
-    
 elif stackedbarplot != None:
-    # python gene_analysis.py '--data csv_gz_file' '--genename genename' '--genepos geneposition' -B '--thres1 thres1'
+    # python gene_analysis.py --data csv_gz_file '--genename genename' '--genepos geneposition' -B '--thres1 thres1'
     try:
         gene = int(gene)
     except ValueError:

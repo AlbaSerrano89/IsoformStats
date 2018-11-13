@@ -148,18 +148,23 @@ def summarized_props(all_data, gene, thres = 0.1):
                 print('The expressed isoforms just explain the ' + str(perc) + '% of the gene expression of these samples.')
             
             final_props = []
-            for iso_props in list_props:
+            for i in range(0, len(list_props)):
+                iso_props = list_props[i]
                 if iso_props[1] >= thres:
                     final_props.append(iso_props)
+                else:
+                    if i == 0:
+                        return('There is not any isoform with an expression higher than ' + str(thres))
             
-            acum = final_props[-1][2]
-            rem = round(1 - acum, 3)
-            if len(list_props) != len(final_props):
-                final_props.append(['other', rem])
-            
-            Proportions = {}
-            Proportions[gene2] = final_props
-            return(Proportions)
+            if len(final_props) > 0:
+                acum = final_props[-1][2]
+                rem = round(1 - acum, 3)
+                if len(list_props) != len(final_props):
+                    final_props.append(['other', rem])
+                    
+                Proportions = {}
+                Proportions[gene2] = final_props
+                return(Proportions)
         else:
             return(gene_props)
     else:
@@ -181,7 +186,6 @@ def no_other(all_data, gene, thres = 0.1, thres2 = 0.7):
             list_props = list(gene_props.values())[0]
             if list_props[-1][0] == 'other':
                 list_props.pop()
-                print(list_props)
             
             total = list_props[-1][2]
             new_list_props = []
@@ -241,24 +245,24 @@ def type_of_gene(all_data, gene, thres = 0.1, thres2 = 0.7, thres3 = 10):
                 else:
                     tog = 'Multiform'
             
-            isos = []
-            ini_props = []
-            acum_props = []
-            new_ini_props = []
-            new_acum_props = []
-            for iso_stats in isos_stats[:i+1]:
-                isos.append(iso_stats[0])
-                ini_props.append(iso_stats[1])
-                acum_props.append(iso_stats[2])
-                new_ini_props.append(iso_stats[3])
-                new_acum_props.append(iso_stats[4])
+                isos = []
+                ini_props = []
+                acum_props = []
+                new_ini_props = []
+                new_acum_props = []
+                for iso_stats in isos_stats[:i+1]:
+                    isos.append(iso_stats[0])
+                    ini_props.append(iso_stats[1])
+                    acum_props.append(iso_stats[2])
+                    new_ini_props.append(iso_stats[3])
+                    new_acum_props.append(iso_stats[4])
         
         Types[gene2] = [tog, isos, ini_props, acum_props, new_ini_props, new_acum_props]
         return(Types)
     else:
         return(gene2)
 
-def big_summary(all_data, thres = 0.1, thres2 = 0.7, thres3 = 10, bstissuefile = '_genes_'):
+def big_summary(all_data, out_bsdir, dfbsfile = 'T', out_bsfile = '_genes_', thres = 0.1, thres2 = 0.7, thres3 = 10):
     thres = float(thres)
     thres2 = float(thres2)
     thres3 = int(thres3)
@@ -273,15 +277,67 @@ def big_summary(all_data, thres = 0.1, thres2 = 0.7, thres3 = 10, bstissuefile =
     df = pd.DataFrame(all_types, index = ['Type', 'Isoforms', 'InitialProportion', 'CumulativeProportion', 'NewProportion', 'NewCumulativeProportion'], dtype = 'category')
     df = df.T
     
-    if bstissuefile != '_genes_':
-        bstissuefile = bstissuefile
+    if dfbsfile == 'T':
+        if not os.path.isdir(out_bsdir):
+            os.mkdir(out_bsdir)
+        
+        if out_bsfile != '_genes_':
+            bstissuefile = out_bsdir + out_bsfile
+        else:
+            bstissuefile = out_bsdir + tissue + out_bsfile + str(thres * 100) + '_' + str(thres2 * 100) + '_' + str(thres3) + '.csv'
+        
+        df.to_csv(bstissuefile)
+    elif dfbsfile == 'F':
+        return(df)
     else:
-        bstissuefile = tissue + bstissuefile + str(thres * 100) + '_' + str(thres2 * 100) + '_' + str(thres3) + '.csv'
-    
-    df.to_csv(bstissuefile)
+        print(dfbsfile + ' is not an acceptable option for --dfstatsfile.')
 
-def statistics(all_data, bstissuefile, tissuestatsfile = '_statistics.csv', dffile = 'T'):
-    df = pd.read_csv(bstissuefile)
+def compare_thres(all_data, thres1, thres2, thres3):
+    list1 = []
+    list2 = []
+    list3 = []
+    
+    if type(thres1) == list:
+        list1 = thres1
+    else:
+        list1.append(thres1)
+    
+    if type(thres2) == list:
+        list2 = thres2
+    else:
+        list2.append(thres2)
+    
+    if type(thres3) == list:
+        list3 = thres3
+    else:
+        list3.append(thres3)
+    
+    n1 = len(list1)
+    n2 = len(list2)
+    n3 = len(list3)
+    
+    total_combs = n1 * n2 * n3
+    print('There are ' + str(total_combs) + ' combinations.')
+    
+    stats_j = []
+    stats_k = []
+    total_stats = []
+    for i in range(0, n1):
+        for j in range(0, n2):
+            for k in range(0, n3):
+                df = big_summary(all_data, out_bsdir = '', dfbsfile = 'F', thres = list1[i], thres2 = list2[j], thres3 = list3[k])
+                stats = statistics(all_data, df, dfstatsfile = 'F')
+                stats_k.append(stats)
+            stats_j.append(stats_k)
+        total_stats.append(stats_j)
+    
+    return(total_stats)
+
+def statistics(all_data, in_bsfile, tissuestatsfile = '_statistics.csv', dfstatsfile = 'T'):
+    if in_bsfile.endswith('.csv'):
+        df = pd.read_csv(in_bsfile)
+    else:
+        df = in_bsfile
     
     nnexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count()
     nfew = df.loc[df['Type'] == 'FewSamples']['Type'].count()
@@ -307,10 +363,10 @@ def statistics(all_data, bstissuefile, tissuestatsfile = '_statistics.csv', dffi
     for i in range(0, len(types)):
         stats[types[i]] = [numbs[i], props[i]]
     
-    if dffile == 'T':
-        df = pd.DataFrame(stats, index = ['Counts', 'Typeform'])
-        df = df.T
-        
+    df = pd.DataFrame(stats, index = ['Counts', 'Typeprop'])
+    df = df.T
+    
+    if dfstatsfile == 'T':
         if tissuestatsfile != '_statistics.csv':
             tissuestatsfile = tissuestatsfile
         else:
@@ -318,10 +374,11 @@ def statistics(all_data, bstissuefile, tissuestatsfile = '_statistics.csv', dffi
             tissuestatsfile = tissue + tissuestatsfile
         
         df.to_csv(tissuestatsfile)
-    elif dffile == 'F':
-        return(stats)
+        
+    elif dfstatsfile == 'F':
+        return(df)
     else:
-        print(dffile + 'is not an acceptable option for --dffile.')
+        print(dfstatsfile + ' is not an acceptable option for --dfstatsfile.')
 
 def all_tissues_analysis(original_dir, pref = '', new_dir = '', thres = 0.9, thres2 = 0.7, thres3 = 10):
     thres = float(thres)
@@ -420,25 +477,38 @@ def general_view(all_data, gene):
     genes = list(all_data[0])
     
     if gene2 in genes:
-        dat = all_data[1]
-        samp_names = dat[gene2][0][1]
-        nsamps = len(samp_names)
+        gene_props = total_prop(all_data, gene)
         
-        if nsamps == 0:
-            return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
+        if 'not expressed' in gene_props:
+            return(gene_props)
         else:
-            n_isos = len(dat[gene2])
+            dat = all_data[1]
+            info_gene = dat[gene2]
+            
+            samp_names = info_gene[0][1]
+            nsamps = len(samp_names)
             ind = numpy.arange(nsamps)
+            
+            vals = list(gene_props.values())[0]
+            isos = []
+            for iso in vals:
+                isos.append(iso[0])
+            
+            n_isos = len(isos)
             
             fig, ax = plt.subplots()
             width = 0.75
             
-            acum_vect = dat[gene2][0][2]
-            ax.bar(ind, dat[gene2][0][2], width, label = dat[gene2][0][0])
-            for i in range(1, n_isos):
-                ax.bar(ind, dat[gene2][i][2], width, bottom = acum_vect, label = dat[gene2][i][0])
-                acum_vect = tuple(sum(x) for x in zip(acum_vect, dat[gene2][i][2]))
+            acum_vect = []
+            for i in range(0, nsamps):
+                acum_vect.append(0)
             
+            for iso in isos:
+                for i in range(0, n_isos):
+                    if info_gene[i][0] == iso:
+                        ax.bar(ind, info_gene[i][2], width, bottom = acum_vect, label = info_gene[i][0])
+                        acum_vect = tuple(sum(x) for x in zip(acum_vect, info_gene[i][2]))
+                        
             ax.set_ylabel('Proportion')
             ax.set_title('Distribution of samples of the gene ' + gene2)
             ax.set_xticks(ind)
@@ -449,45 +519,56 @@ def general_view(all_data, gene):
     else:
         return(gene2)
 
-def pie_plot(all_data, gene, thres = 0.9):
-    thres = float(thres)
-    
+def visual_matrix(all_data, gene):
     gene2 = formatting_gene(all_data, gene)
     genes = list(all_data[0])
-        
+    
     if gene2 in genes:
-        gene_props = summarized_props(all_data, gene, thres)
+        dat = all_data[1]
+        info_gene = dat[gene2]
         
-        if 'not expressed' in gene_props:
-            return(gene_props)
-        else:
-            final_isos = []
-            final_props = []
-            if len(gene_props) == 2:
-                isos = gene_props[0]
-                other = gene_props[1]
-            
-                for iso in isos:
-                    final_isos.append(iso[0])
-                    final_props.append(iso[1])
-            
-                final_isos.append(other[0])
-                final_props.append(other[1])
-            else:
-                for iso in gene_props[0]:
-                    final_isos.append(iso[0])
-                    final_props.append(iso[1])
+        samp_names = info_gene[0][1]
+        nsamps = len(samp_names)
+        indx = numpy.arange(nsamps)
+        
+        isos = []
+        for iso in info_gene:
+            isos.append(iso[0])
+        nisos = len(isos)
+        indy = numpy.arange(nisos) + 0.5
+        
+        fig, ax = plt.subplots()
+        width = 1
+        
+        acum_vect = []
+        sum_vect = []
+        for i in range(0, nsamps):
+            acum_vect.append(0)
+            sum_vect.append(1)
+        
+        for iso in info_gene:
+            colors = []
+            for numb in iso[2]:
+                if numb > 0:
+                    colors.append('black')
+                else:
+                    colors.append('white')
                 
-            fig1, ax1 = plt.subplots()
-            
-            ax1.pie(final_props, labels = final_isos, autopct = '%.2f%%', shadow = True, startangle = 0)
-            ax1.set_title('Distribution of samples of the gene ' + gene2)
-            ax1.axis('equal')
-            plt.show()
+            ax.bar(indx, sum_vect, width, bottom = acum_vect, color = colors, edgecolor = 'gray')
+            acum_vect = tuple(sum(x) for x in zip(acum_vect, sum_vect))
+        
+        ax.set_ylabel('Isoforms')
+        ax.set_title('Gene ' + gene2)
+        ax.set_xticks(indx)
+        ax.set_xticklabels(samp_names, rotation = 'vertical', fontsize = 8)
+        ax.set_yticks(indy)
+        ax.set_yticklabels(isos, fontsize = 8)
+        plt.subplots_adjust(bottom = 0.2, top = 0.9)
+        plt.show()
     else:
         return(gene2)
 
-def stacked_barplot(all_data, gene, thres = 0.9):
+def stacked_barplot(all_data, gene, thres = 0.1):
     thres = float(thres)
     
     gene2 = formatting_gene(all_data, gene)
@@ -500,31 +581,44 @@ def stacked_barplot(all_data, gene, thres = 0.9):
             return(gene_props)
         else:
             dat = all_data[1]
-            samp_names = dat[gene2][0][1]
+            info_gene = dat[gene2]
+            
+            samp_names = info_gene[0][1]
             nsamps = len(samp_names)
-            
-            if (len(gene_props) == 2 and gene_props[1][0] == 'other') or (len(gene_props) == 1):
-                keeped_isos = gene_props[0]
-            else:
-                keeped_isos = gene_props
-            
-            sorted_iso = []
-            for iso in keeped_isos:
-                for iso_data in dat[gene2]:
-                    if iso[0] == iso_data[0]:
-                        sorted_iso.append(iso_data)
-            
-            n_isos = len(sorted_iso)
             ind = numpy.arange(nsamps)
             
-            fig, ax = plt.subplots()
-            width = 0.5
+            vals = list(gene_props.values())[0]
+            isos = []
+            for iso in vals:
+                isos.append(iso[0])
             
-            acum_vect = sorted_iso[0][2]
-            ax.bar(ind, acum_vect, width, label = sorted_iso[0][0])
-            for i in range(1, n_isos):
-                ax.bar(ind, sorted_iso[i][2], width, bottom = acum_vect, label = sorted_iso[i][0])
-                acum_vect = tuple(sum(x) for x in zip(acum_vect, sorted_iso[i][2]))
+            all_isos = []
+            for iso in info_gene:
+                all_isos.append(iso[0])
+            
+            n_isos = len(all_isos)
+            
+            fig, ax = plt.subplots()
+            width = 0.75
+            
+            acum_vect = []
+            total_vect = []
+            for i in range(0, nsamps):
+                acum_vect.append(0)
+                total_vect.append(1)
+                    
+            for iso in isos:
+                for i in range(0, n_isos):
+                    if info_gene[i][0] == iso:
+                        ax.bar(ind, info_gene[i][2], width, bottom = acum_vect, label = info_gene[i][0])
+                        acum_vect = tuple(sum(x) for x in zip(acum_vect, info_gene[i][2]))
+            
+            if 'other' in isos and vals[-1][1] != 0:
+                other = []
+                for i in range(0, len(total_vect)):
+                    other.append(total_vect[i] - acum_vect[i])
+            
+                ax.bar(ind, tuple(other), width, bottom = acum_vect, label = 'other')
             
             ax.set_ylabel('Proportion')
             ax.set_title('Distribution of samples of the gene ' + gene2)
@@ -540,23 +634,23 @@ def stats_barplot(all_data, csv_file):
     stats = statistics(all_data, csv_file, dffile = 'F')
     tissue = all_data[2]
     
-    types = list(stats.keys())
+    types = list(stats.index)
+    props = list(stats.Typeprop)
     
     numbs = []
-    props = []
-    for value in stats.values():
-        numbs.append(int(value[0]))
-        props.append(float(value[1]))
+    for count in list(stats.Counts):
+        numbs.append(int(count))
     
     labs = []
     for i in range(0, len(types)):
         labs.append(types[i] + ': ' + str(numbs[i]))
     
-    ntypes = len(stats)
-    acum = props[0]
+    ntypes = len(types)
     colors = ['C0', 'C9', 'C1', 'C2', 'C3', 'C5']
     
     fig, ax = plt.subplots()
+    
+    acum = props[0]
     ax.bar(1, props[0], 1, label = labs[0], color = colors[0])
     for i in range(1, ntypes):
         ax.bar(1, props[i], 1, bottom = acum, label = labs[i], color = colors[i])
@@ -569,62 +663,43 @@ def stats_barplot(all_data, csv_file):
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
     plt.show()
 
-def notexp_pie(all_data, csv_file):
+def expr_barplot(all_data, csv_file):
     stats = statistics(all_data, csv_file, dffile = 'F')
     tissue = all_data[2]
     
-    numbs = []
-    props = []
-    for value in stats.values():
-        numbs.append(int(value[0]))
-        props.append(float(value[1]))
-    
-    ini_types = list(stats.keys())
-    types = ini_types[0:2]
-    types.append('Expressed')
-    
-    new_numbs = [numbs[0], numbs[1], sum(numbs[2:])]
-    labs = []
-    for i in range(0, len(types)):
-        labs.append(types[i] + ': ' + str(new_numbs[i]))
-    
-    new_props = [props[0], props[1], sum(props[2:])]
-    
-    fig1, ax1 = plt.subplots()
-    colors = ['C0', 'C9', 'C6']
-    ax1.pie(new_props, labels = labs, autopct = '%1.1f%%', shadow = True, startangle = 0, colors = colors)
-    ax1.set_title('Isoform distribution of ' + tissue + '\nExpressed and not expressed isoforms')
-    ax1.axis('equal')
-    plt.show()
-
-def expr_pie(all_data, csv_file):
-    stats = statistics(all_data, csv_file, dffile = 'F')
-    tissue = all_data[2]
+    types = list(stats.index)[2:]
+    props = list(stats.Typeprop)[2:]
     
     numbs = []
-    props = []
-    for value in stats.values():
-        numbs.append(int(value[0]))
-        props.append(float(value[1]))
+    for count in list(stats.Counts)[2:]:
+        numbs.append(int(count))
     
-    types = list(stats.keys())[2:]
-    new_numbs = numbs[2:]
+    total = sum(numbs)
+    
+    props = []
+    for numb in numbs:
+        props.append(numb / float(total))
+    
     labs = []
     for i in range(0, len(types)):
-        labs.append(types[i] + ': ' + str(new_numbs[i]))
+        labs.append(types[i] + ': ' + str(numbs[i]))
     
-    new_total = sum(new_numbs)
-    new_props = []
-    for numb in new_numbs:
-        new_prop = numb / float(new_total)
-        new_props.append(new_prop)
-    
+    ntypes = len(types)
     colors = ['C1', 'C2', 'C3', 'C5']
     
-    fig1, ax1 = plt.subplots()
-    ax1.pie(new_props, labels = labs, autopct = '%1.1f%%', shadow = True, startangle = 0, colors = colors)
-    ax1.set_title('Isoform distribution of ' + tissue + '\nExpressed isoforms')
-    ax1.axis('equal')
+    fig, ax = plt.subplots()
+    
+    acum = props[0]
+    ax.bar(1, props[0], 1, label = labs[0], color = colors[0])
+    for i in range(1, ntypes):
+        ax.bar(1, props[i], 1, bottom = acum, label = labs[i], color = colors[i])
+        acum =  acum + props[i]
+    
+    ax.set_ylabel('Proportion')
+    ax.set_title('Isoform distribution of ' + tissue)
+    ax.set_xticks([0])
+    ax.legend()
+    plt.subplots_adjust(bottom = 0.1, top = 0.9)
     plt.show()
 
 def all_tissues_barplot(stats_filename = 'all_tissues_statistics.csv'):
