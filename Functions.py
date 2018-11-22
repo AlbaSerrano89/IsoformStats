@@ -257,47 +257,6 @@ def big_summary(all_data, out_bsdir, dfbsfile = 'T', out_bsfile = '_genes_', thr
         return(df)
     else:
         print(dfbsfile + ' is not an acceptable option for --dfstatsfile.')
-#
-#def compare_thres(all_data, thres1, thres2, thres3):
-#    list1 = []
-#    list2 = []
-#    list3 = []
-#    
-#    if type(thres1) == list:
-#        list1 = thres1
-#    else:
-#        list1.append(thres1)
-#    
-#    if type(thres2) == list:
-#        list2 = thres2
-#    else:
-#        list2.append(thres2)
-#    
-#    if type(thres3) == list:
-#        list3 = thres3
-#    else:
-#        list3.append(thres3)
-#    
-#    n1 = len(list1)
-#    n2 = len(list2)
-#    n3 = len(list3)
-#    
-#    total_combs = n1 * n2 * n3
-#    print('There are ' + str(total_combs) + ' combinations.')
-#    
-#    stats_j = []
-#    stats_k = []
-#    total_stats = []
-#    for i in range(0, n1):
-#        for j in range(0, n2):
-#            for k in range(0, n3):
-#                df = big_summary(all_data, out_bsdir = '', dfbsfile = 'F', thres = list1[i], thres2 = list2[j], thres3 = list3[k])
-#                stats = statistics(all_data, df, dfstatsfile = 'F')
-#                stats_k.append(stats)
-#            stats_j.append(stats_k)
-#        total_stats.append(stats_j)
-#    
-#    return(total_stats)
 
 def statistics(all_data, in_bsfile, freq_type = 'rel', tissuestatsfile = '_statistics.csv', dfstatsfile = 'F'):
     df = pd.read_csv(in_bsfile, index_col = 0)
