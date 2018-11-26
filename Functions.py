@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Oct 19 12:06:44 2018
-
 @author: aserrano
 """
 import os
@@ -11,6 +10,7 @@ import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import cProfile
 
 def reading_data(csv_file):
     Data = dict()
@@ -46,8 +46,9 @@ def reading_data(csv_file):
                 # keys = 'gene_names'
                 # Data[gene] = list of isos
                 # each iso  = [ENST, samp]
-                gene_name = ff[1]
-                gene_type = ff[2]
+                genename = ff[1]
+                genetype = ff[2]
+                geneid = ff[4]
                 nums  = list()
                 samps = list()
                 for i in range(0, nsamps):
@@ -56,13 +57,13 @@ def reading_data(csv_file):
                         samps.append(samp_names[i])
                         nums.append(num)
                 # here I update or generate the data[gene_id] value
-                tmp = Data.get(gene_name, None)
+                tmp = Data.get(geneid, None)
                 if tmp is None:
-                    Data[gene_name] = [gene_type, tuple(samps), [ff[0], ff[3], tuple(nums)]]
+                    Data[geneid] = [genename, genetype, tuple(samps), [ff[0], ff[3], tuple(nums)]]
                 else:
                     tmp.append([ff[0], ff[3], tuple(nums)])
-                    Data[gene_name] = tmp
-     
+                    Data[geneid] = tmp
+
     return([list(Data.keys()), Data, tissue, samp_names])
 
 def gene_name(all_data, gene):
@@ -85,15 +86,8 @@ def gene_info(all_data, gene):
     genes = all_data[0]
         
     if gene2 in genes:
-        geneinfo1 = all_data[1][gene2]
-        
-        nsamps = len(geneinfo1[1])
-        for trans in geneinfo1[2:]:
-            if len(trans[2]) == 0:
-                trans[2] = tuple(np.repeat(0.0, nsamps))
-        
         geneinfo = {}
-        geneinfo[gene2] = geneinfo1
+        geneinfo[gene2] = all_data[1][gene2]
         return(geneinfo)
     else:
         return(gene2)
@@ -105,12 +99,13 @@ def gene_data(all_data, gene):
     if gene2 in genes:
         geneinfo = gene_info(all_data, gene2)[gene2]
         
-        gene_type = geneinfo[0]
-        samp_names = geneinfo[1]
-        count = len(samp_names)
+        genename = geneinfo[0]
+        genetype = geneinfo[1]
+        sampnames = geneinfo[2]
+        nsamps = len(sampnames)
         
         genedata = {}
-        genedata[gene2] = [gene_type, samp_names, count]
+        genedata[gene2] = [genename, genetype, sampnames, nsamps]
         return(genedata)
     else:
         return(gene2)
@@ -123,7 +118,7 @@ def gene_statistics(all_data, gene, pretty = 'F'):
         geneinfo = gene_info(all_data, gene2)[gene2]
         genedata = gene_data(all_data, gene2)[gene2]
         
-        if genedata[2] == 0:
+        if genedata[3] == 0:
             return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
         else:
             def takeMean(elem):
@@ -131,7 +126,7 @@ def gene_statistics(all_data, gene, pretty = 'F'):
             
             isoforms = []
             list_stats = []
-            for trans in geneinfo[2:]:
+            for trans in geneinfo[3:]:
                 iso = trans[0]
                 isoforms.append(iso)
                 isotype = trans[1]
@@ -140,12 +135,9 @@ def gene_statistics(all_data, gene, pretty = 'F'):
                 if len(trans[2]) == 1:
                     sd = 0.0
                 else:
-                    sd = statistics.stdev(trans[2])
-                Q1 = np.percentile(trans[2], 25)
-                med = np.median(trans[2])
-                Q3 = np.percentile(trans[2], 75)
-                minim = min(trans[2])
-                maxim = max(trans[2])
+                    sd = np.std(np.array(trans[2]))
+                
+                minim, Q1, med, Q3, maxim = np.percentile(trans[2], [0, 25, 50, 75, 100])
                 
                 list_stats.append([iso, isotype, mn, sd, Q1, med, Q3, minim, maxim])
             
@@ -166,8 +158,8 @@ def gene_statistics(all_data, gene, pretty = 'F'):
             gene_stats[gene2] = genedata + list_stats
             
             if pretty == 'T':
-                print('\n\n\t' + gene2 + ' --> ' + genedata[0] + '\n\n')
-                pretty_df = gene_stats[gene2][3:]
+                print('\n\n\t' + gene2 + ' - ' + genedata[0] + ' ---> ' + genedata[1] + '\n\n')
+                pretty_df = gene_stats[gene2][4:]
                 df = pd.DataFrame(pretty_df, index = isoforms, columns = ['Transcript', 'TranscriptType', 'Mean', 'CumulativeMean', 'StandardDeviation', 'Q1', 'Median', 'Q3', 'Minimum', 'Maximum'])
                 df2 = df.drop(['Transcript'], axis = 1)
                 return(df2)
@@ -189,7 +181,7 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
             genestats = gene_stats[gene2]
             genedata = gene_data(all_data, gene2)[gene2]
             
-            means = [trans[2] for trans in genestats[3:]]
+            means = [trans[2] for trans in genestats[4:]]
             means_array = np.asarray(means)
             high_props = list(means_array[means_array > minexp])
             ntrans = len(high_props)
@@ -197,9 +189,9 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
             if ntrans == 0:
                 return('There is not any isoform of the gene ' + gene2 + ' with a mean expression higher than ' + str(minexp))
             else:
-                transcripts = [trans[0] for trans in genestats[3:][:ntrans]]
-                trans_type = [trans[1] for trans in genestats[3:][:ntrans]]
-                cumu_props = [trans[3] for trans in genestats[3:][:ntrans]]
+                transcripts = [trans[0] for trans in genestats[4:][:ntrans]]
+                trans_type = [trans[1] for trans in genestats[4:][:ntrans]]
+                cumu_props = [trans[3] for trans in genestats[4:][:ntrans]]
                 
                 total_sum = np.float64(cumu_props[-1])
                 
@@ -214,8 +206,9 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
                     last_cum = high_props[-1] + cumu_props[-1]
                     if round(last_cum, 5) == 1:
                         cumu_props.append(1.0)
+                        
                     else:
-                        print('The gene ' + gene2 + ' is just explained in a ' + str(round(last_cum + 100, 2)) + '%.')
+                        print('The gene ' + gene2 + ' is just explained in a ' + str(round(last_cum * 100, 2)) + '%.')
                         cumu_props.append(last_cum)
                     
                     new_means.append('-')
@@ -231,8 +224,8 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
             gene_filt_props[gene2] = genedata + fin_res
             
             if pretty == 'T':
-                print('\n\n\t' + gene2 + ' --> ' + genedata[0] + '\n\n')
-                pretty_df = gene_filt_props[gene2][3:]
+                print('\n\n\t' + gene2 + ' - ' + genedata[0] + ' ---> ' + genedata[1] + '\n\n')
+                pretty_df = gene_filt_props[gene2][4:]
                 df = pd.DataFrame(pretty_df, index = results[0], columns = ['Transcript', 'TranscriptType', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
                 df2 = df.drop(['Transcript'], axis = 1)
                 return(df2)
@@ -257,11 +250,11 @@ def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, mintotexp = 
             else:
                 cog = 'LowExpressedTranscripts'
         else:
-            if genedata[2] < minsamps:
+            if genedata[3] < minsamps:
                 transcripts = transcript_types = means = cumu_means = new_means = new_cumu_means = '-'
                 cog = 'FewSamples'
             else:
-                gene_filt = gene_filt_props[gene2][3:]
+                gene_filt = gene_filt_props[gene2][4:]
                 gene_filt.pop()
                 
                 if len(gene_filt) == 1:
@@ -281,10 +274,10 @@ def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, mintotexp = 
                 new_cumu_means = [trans[5] for trans in gene_filt]
                 
         Types = {}
-        Types[gene2] = [genedata[0], cog, transcripts, transcript_types, means, cumu_means, new_means, new_cumu_means]
+        Types[gene2] = genedata + [cog, transcripts, transcript_types, means, cumu_means, new_means, new_cumu_means]
         
-        if pretty == 'T':
-            print('\n\n\t' + gene2 + ' --> ' + genedata[0] + '\n\n')
+        if pretty == 'T' and cog not in ('NotExpressed' or 'LowExpressedTranscripts' or 'FewSamples'):
+            print('\n\n\t' + gene2 + ' - ' + genedata[0] + ', ' + genedata[1] + ' ---> ' + cog + '\n\n')
             df = pd.DataFrame(gene_filt, index = transcripts, columns = ['Transcript', 'TranscriptType', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
             df2 = df.drop(['Transcript'], axis = 1)
             return(df2)
@@ -293,18 +286,19 @@ def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, mintotexp = 
     else:
         return(gene2)
 
-def big_summary(all_data, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, mintotexp = 0.7, minsamps = 10):
-    tissue = all_data[2]
-    
-    all_types = {}
-    for i in range(0, len(all_data[0])):
-        res = gene_classification(all_data, i, 'F', minexp, mintotexp, minsamps)
-        all_types.update(res)
-    
-    df = pd.DataFrame(all_types, dtype = 'category')
-    df = df.T
-    
-    df.columns = ['GeneType', 'GeneClassification', 'Transcripts', 'TranscriptTypes', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean']
+def big_summary(csv_file, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, mintotexp = 0.7, minsamps = 10):
+    Data = dict()    
+    lastbar = csv_file.rfind('/')
+    file = csv_file[(lastbar + 1):]    
+    if file.startswith('SMTS_'):
+        ni = 5
+    elif file.startswith('SMTSD_'):
+        ni = 6    
+    if file.endswith('gz'):
+        nf = -7
+    elif file.endswith('csv'):
+        nf = -4    
+    tissue = file[ni:nf]
     
     if out_bsdir[-1] != '/':
         out_bsdir = out_bsdir + '/'
@@ -316,8 +310,57 @@ def big_summary(all_data, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
     
     if not os.path.isdir(out_bsdir):
         os.mkdir(out_bsdir)
+
+    header = ';'.join(['GeneId', 'GeneName', 'GeneType', 'ExpressedSamples', 'NumberOfExpressedSamples', 'GeneClassification', 'Transcripts', 'TranscriptTypes', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
+    with gzip.open(csv_file, 'rt') if csv_file.endswith('gz') else open(csv_file) as rd, open(bstissuefile,'w') as wr:
+        wr.write(header + '\n')
+        
+        nsamps = 0
+        samp_names = ''
+        
+        for line in rd:
+            ff = line.strip().split('\t')
+            if line.startswith('transc'):
+                columns = tuple(ff)
+                samp_names = columns[5:]
+                nsamps = len(samp_names)
+            else:
+                genename = ff[1]
+                genetype = ff[2]
+                geneid = ff[4]
+                samps = list()
+                samps = [samp_names[i] for i in range(0,nsamps)  if float(ff[i + 5]) >= 0]
+                nums  = [float(i) for i in ff[5:]  if float(i) >= 0] 
+                
+                tmp = Data.get(geneid, None)
+                if tmp is None:
+                    # process me
+                    if len(Data.keys()) > 0:
+                        res = gene_classification([list(Data.keys()), Data, tissue, samp_names] , 0, 'F', minexp, mintotexp, minsamps)
+                        
+                        for k, v in (res.items()):
+                            outline = [k]
+                            tmp_list = [str(x) for x in v]
+                            outline.extend(tmp_list)
+                            wr.write(';'.join(outline) + '\n')
+                        
+                        if len(Data.keys()) > 1:
+                            print(Data.keys())
+                            raise
+                        Data = dict()
+                    Data[geneid] = [genename, genetype, tuple(samps), [ff[0], ff[3], tuple(nums)]]
+                else:
+                    tmp.append([ff[0], ff[3], tuple(nums)])
+                    Data[geneid] = tmp
+        
+        res = gene_classification([list(Data.keys()),Data, tissue, samp_names] , 0, 'F', minexp, mintotexp, minsamps)
+        for k, v in (res.items()):
+            outline = [k]
+            tmp_list = [str(x) for x in v]
+            outline.extend(tmp_list)
+            wr.write(';'.join(outline) + '\n')
     
-    df.to_csv(bstissuefile)
+    return None
 
 def tissue_statistics(all_data, in_bsfile, freq_type = 'rel', tissuestatsfile = '_statistics.csv', dfstatsfile = 'F'):
     df = pd.read_csv(in_bsfile, index_col = 0)
@@ -442,6 +485,7 @@ def all_tissues_stats(bigsummaries_dir, allstats_file = 'all_tissues_statistics.
     df = pd.DataFrame(stats, index = types)
     df = df.T
     df.to_csv(allstats_file)
+    return None
 
 
 
