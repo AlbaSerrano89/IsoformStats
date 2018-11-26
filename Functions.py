@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+### !/usr/bin/env python3
+## # -*- coding: utf-8 -*-
 """
 Created on Fri Oct 19 12:06:44 2018
 
@@ -11,6 +11,7 @@ import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import cProfile
 
 def reading_data(csv_file):
     Data = dict()
@@ -141,12 +142,14 @@ def gene_statistics(all_data, gene, pretty = 'F'):
                 if len(trans[2]) == 1:
                     sd = 0.0
                 else:
-                    sd = statistics.stdev(trans[2])
-                Q1 = np.percentile(trans[2], 25)
-                med = np.median(trans[2])
-                Q3 = np.percentile(trans[2], 75)
-                minim = min(trans[2])
-                maxim = max(trans[2])
+                    #sd = statistics.stdev(trans[2])
+                    sd = np.std(np.array(trans[2]))
+                minim,Q1,med,Q3,maxim = np.percentile(trans[2],[0,25,50,75,100])
+                # Q1 = np.percentile(trans[2], 25)
+                # med = np.median(trans[2])
+                # Q3 = np.percentile(trans[2], 75)
+                # minim = min(trans[2])
+                # maxim = max(trans[2])
                 
                 list_stats.append([iso, isotype, mn, sd, Q1, med, Q3, minim, maxim])
             
@@ -311,7 +314,21 @@ def big_summary(all_data, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
         nf = -4    
     tissue = file[ni:nf]
     
-    with gzip.open(all_data, 'rt') if all_data.endswith('gz') else open(all_data) as rd:
+    if out_bsdir[-1] != '/':
+        out_bsdir = out_bsdir + '/'
+    
+    if out_bsfile != '_genes_':
+        bstissuefile = out_bsdir + out_bsfile
+    else:
+        bstissuefile = out_bsdir + tissue + out_bsfile + str(minexp * 100) + '_' + str(mintotexp * 100) + '_' + str(minsamps) + '.csv'
+    
+    if not os.path.isdir(out_bsdir):
+        os.mkdir(out_bsdir)
+
+    header = ','.join(['GeneName,GeneType', 'GeneClassification', 'Transcripts', 'TranscriptTypes', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
+    with gzip.open(all_data, 'rt') if all_data.endswith('gz') else open(all_data) as rd,  open(bstissuefile,'w') as wr:
+        wr.write(header+'\n')
+        
         nsamps = 0
         samp_names = ''
         all_types = {}
@@ -332,18 +349,21 @@ def big_summary(all_data, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
                 gene_type = ff[2]
                 nums  = list()
                 samps = list()
-                for i in range(0, nsamps):
-                    num = float(ff[i + 5])
-                    if num >= 0:
-                        samps.append(samp_names[i])
-                        nums.append(num)
+                samps = [ samp_names[i] for i in range(0,nsamps)  if float(ff[i+5])>= 0 ]
+                nums  = [ float(i) for i in ff[5:]  if float(i)>= 0 ] 
                 # here I update or generate the data[gene_id] value
                 tmp = Data.get(gene_name, None)
                 if tmp is None:
                     # process me
                     if len(Data.keys() )  >0  :
                         res = gene_classification([Data.keys(),Data, tissue, samp_names   ] , 0, 'F', minexp, mintotexp, minsamps)
-                        all_types.update(res)
+                        #res is a dictionary we can already print out
+                        for k,v in (res.items()):
+                            outline = [k]
+                            tmp_list = [str(x) for x in v]
+                            outline.extend(tmp_list)
+                            wr.write(','.join(outline) + '\n')
+                        #all_types.update(res)
                         if len(Data.keys() )  > 1:
                             print( Data.keys())
                             raise
@@ -354,37 +374,16 @@ def big_summary(all_data, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
                     Data[gene_name] = tmp
     
     
-    #last gene process
-    res = gene_classification([Data.keys(),Data, tissue, samp_names   ] , 0, 'F', minexp, mintotexp, minsamps)
-    all_types.update(res)
-    
-    #tissue = all_data[2]
-    
-    # all_types = {}
-    # for i in range(0, len(all_data[0])):
-    #     #trying to limit the size of items to push around
-    #     # cutting the size of dict to just one gene, may not do much though
-    #     all_data_tmp  = [all_data[0],all_data[1][all_data[0][i]], data[2],data[3]]
-    #     res = gene_classification(all_data_tmp, i, 'F', minexp, mintotexp, minsamps)
-    #     all_types.update(res)
-    
-    df = pd.DataFrame(all_types, dtype = 'category')
-    df = df.T
-    
-    df.columns = ['GeneType', 'GeneClassification', 'Transcripts', 'TranscriptTypes', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean']
-    
-    if out_bsdir[-1] != '/':
-        out_bsdir = out_bsdir + '/'
-    
-    if out_bsfile != '_genes_':
-        bstissuefile = out_bsdir + out_bsfile
-    else:
-        bstissuefile = out_bsdir + tissue + out_bsfile + str(minexp * 100) + '_' + str(mintotexp * 100) + '_' + str(minsamps) + '.csv'
-    
-    if not os.path.isdir(out_bsdir):
-        os.mkdir(out_bsdir)
-    
-    df.to_csv(bstissuefile)
+        #last gene process
+        res = gene_classification([Data.keys(),Data, tissue, samp_names   ] , 0, 'F', minexp, mintotexp, minsamps)
+        for k,v in (res.items()):
+            outline = [k]
+            tmp_list = [str(x) for x in v]
+            outline.extend(tmp_list)
+            wr.write(','.join(outline) + '\n')
+        #all_types.update(res)
+       
+    return None
 
 def tissue_statistics(all_data, in_bsfile, freq_type = 'rel', tissuestatsfile = '_statistics.csv', dfstatsfile = 'F'):
     df = pd.read_csv(in_bsfile, index_col = 0)
@@ -509,6 +508,7 @@ def all_tissues_stats(bigsummaries_dir, allstats_file = 'all_tissues_statistics.
     df = pd.DataFrame(stats, index = types)
     df = df.T
     df.to_csv(allstats_file)
+    return None
 
 
 

@@ -10,6 +10,7 @@ import argparse
 import pandas
 import pprint
 import Functions
+import cProfile
 
 parser = argparse.ArgumentParser()
 
@@ -87,7 +88,10 @@ if dfstatsfile == 'T':
 if bigsummary != None:
     if out_bsdir == None:
         parser.error('An output directory is required.')
-
+    print (minexp)
+    print (mintotexp)
+    print(minsamps)
+    
     #a = Functions.big_summary(DATA, out_bsdir, out_bsfile, minexp, mintotexp, minsamps)
     a = Functions.big_summary(args.data, out_bsdir, out_bsfile, minexp, mintotexp, minsamps)
 
