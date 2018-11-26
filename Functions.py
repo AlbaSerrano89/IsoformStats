@@ -66,6 +66,7 @@ def reading_data(csv_file):
     return([list(Data.keys()), Data, tissue, samp_names])
 
 def gene_name(all_data, gene):
+
     genes = all_data[0]
     
     if type(gene) == int:
@@ -213,9 +214,11 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
                 
                     last_cum = high_props[-1] + cumu_props[-1]
                     if round(last_cum, 5) == 1:
+                        #print('The gene ' + gene2 + ' is just explained in a ' + str(round(last_cum * 100, 2)) + '%.')
                         cumu_props.append(1.0)
+                        
                     else:
-                        print('The gene ' + gene2 + ' is just explained in a ' + str(round(last_cum + 100, 2)) + '%.')
+                        print('The gene ' + gene2 + ' is just explained in a ' + str(round(last_cum * 100, 2)) + '%.')
                         cumu_props.append(last_cum)
                     
                     new_means.append('-')
@@ -294,12 +297,76 @@ def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, mintotexp = 
         return(gene2)
 
 def big_summary(all_data, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, mintotexp = 0.7, minsamps = 10):
-    tissue = all_data[2]
+       #here all_data is the csv_file name!! 
+    Data = dict()    
+    lastbar = all_data.rfind('/')
+    file = all_data[(lastbar + 1):]    
+    if file.startswith('SMTS_'):
+        ni = 5
+    elif file.startswith('SMTSD_'):
+        ni = 6    
+    if file.endswith('gz'):
+        nf = -7
+    elif file.endswith('csv'):
+        nf = -4    
+    tissue = file[ni:nf]
     
-    all_types = {}
-    for i in range(0, len(all_data[0])):
-        res = gene_classification(all_data, i, 'F', minexp, mintotexp, minsamps)
-        all_types.update(res)
+    with gzip.open(all_data, 'rt') if all_data.endswith('gz') else open(all_data) as rd:
+        nsamps = 0
+        samp_names = ''
+        all_types = {}
+        
+        for line in rd:
+            ff = line.strip().split('\t')
+            if line.startswith('transc'):
+                columns = tuple(ff)
+                samp_names = columns[5:]
+                nsamps = len(samp_names)
+                
+            else:
+                # here I parse all lines to generate the Data dictionary
+                # keys = 'gene_names'
+                # Data[gene] = list of isos
+                # each iso  = [ENST, samp]
+                gene_name = ff[1]
+                gene_type = ff[2]
+                nums  = list()
+                samps = list()
+                for i in range(0, nsamps):
+                    num = float(ff[i + 5])
+                    if num >= 0:
+                        samps.append(samp_names[i])
+                        nums.append(num)
+                # here I update or generate the data[gene_id] value
+                tmp = Data.get(gene_name, None)
+                if tmp is None:
+                    # process me
+                    if len(Data.keys() )  >0  :
+                        res = gene_classification([Data.keys(),Data, tissue, samp_names   ] , 0, 'F', minexp, mintotexp, minsamps)
+                        all_types.update(res)
+                        if len(Data.keys() )  > 1:
+                            print( Data.keys())
+                            raise
+                        Data = dict()
+                    Data[gene_name] = [gene_type, tuple(samps), [ff[0], ff[3], tuple(nums)]]
+                else:
+                    tmp.append([ff[0], ff[3], tuple(nums)])
+                    Data[gene_name] = tmp
+    
+    
+    #last gene process
+    res = gene_classification([Data.keys(),Data, tissue, samp_names   ] , 0, 'F', minexp, mintotexp, minsamps)
+    all_types.update(res)
+    
+    #tissue = all_data[2]
+    
+    # all_types = {}
+    # for i in range(0, len(all_data[0])):
+    #     #trying to limit the size of items to push around
+    #     # cutting the size of dict to just one gene, may not do much though
+    #     all_data_tmp  = [all_data[0],all_data[1][all_data[0][i]], data[2],data[3]]
+    #     res = gene_classification(all_data_tmp, i, 'F', minexp, mintotexp, minsamps)
+    #     all_types.update(res)
     
     df = pd.DataFrame(all_types, dtype = 'category')
     df = df.T
