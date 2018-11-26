@@ -62,7 +62,7 @@ def reading_data(csv_file):
                 else:
                     tmp.append([ff[0], ff[3], tuple(nums)])
                     Data[gene_name] = tmp
-
+     
     return([list(Data.keys()), Data, tissue, samp_names])
 
 def gene_name(all_data, gene):
