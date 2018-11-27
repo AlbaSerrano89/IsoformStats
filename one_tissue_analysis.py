@@ -49,7 +49,7 @@ bigsummary = args.bigsummary
 #sum_bar = args.sumbar
 #exprbar = args.exprbar
 
-DATA = Functions.reading_data(data)
+#DATA = Functions.reading_data(data)
 
 if out_bsfile != None:
     out_bsfile = out_bsfile
@@ -88,7 +88,7 @@ if bigsummary != None:
     if out_bsdir == None:
         parser.error('An output directory is required.')
 
-    a = Functions.big_summary(DATA, out_bsdir, out_bsfile, minexp, mintotexp, minsamps)
+    a = Functions.big_summary(data , out_bsdir, out_bsfile, minexp, mintotexp, minsamps)
 
 #if stats != None:
 #    a = Functions.statistics(DATA, in_bsfile, freq_type, out_statsfile, dfstatsfile)
