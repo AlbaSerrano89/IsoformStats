@@ -481,12 +481,18 @@ def tissue_statistics(in_tsfile, savefile = 'T', out_statsfile = '', genetype = 
     else:
         return(df2)
 
-def tissue_difthres_summaries(csv_file, seqnumsamps, out_thresdir = 'comparing_thresholds', seqexp = 0.05):
+def tissue_difthres_summaries(csv_file, seqnumsamps, out_thresdir = 'comparing_thresholds', seqexp = 0.05,ncpus=1):
     minexp_seq = np.arange(0, 1, seqexp)
-    
-    for i in minexp_seq:
-        for j in seqnumsamps:
-            tissue_summary(csv_file, out_tsdir = out_thresdir, out_tsfile = '', minexp = i, minsamps = j)
+    from joblib import Parallel, delayed
+    import multiprocessing
+    num_cores = 20
+    def dummy_func(i,j):
+        tissue_summary(csv_file, out_tsdir = out_thresdir, out_tsfile = '', minexp = i, minsamps = j)
+        
+    import itertools    
+    os.system("taskset -p 0xff %d" % os.getpid())
+    result =  Parallel(n_jobs=num_cores,prefer="threads")(delayed(dummy_func)(i,j) for i,j in list(itertools.product(minexp_seq,seqnumsamps)))
+
     
     return None
 
