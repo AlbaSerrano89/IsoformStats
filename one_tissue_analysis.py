@@ -13,91 +13,108 @@ import Functions
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("data", help = "A csv or gzip file with the data you want to analyse.")
-parser.add_argument("--minexp", dest = "minexp", required = False, help = "A threshold used to put the least expressed isoform as 'other'.")
-parser.add_argument("--mintotexp", dest = "mintotexp", required = False, help = "A second threshold, in this case, to select the most significative isoforms.")
-parser.add_argument("--minsamps", dest = "minsamps", required = False, help = "A third threshold, in this case, to determine the minimum of samples to take a gene into account.")
-parser.add_argument("--out_bsdir", dest = "out_bsdir", required = False, help = "The path where the bigsummary file will be saved.")
-parser.add_argument("--out_bsfile", dest = "out_bsfile", required = False, help = "The name of the bigsummary file.")
-parser.add_argument("--dfbsfile", dest = "dfbsfile", required = False, help = "True or False: do you want a file with the dataframe?")
-parser.add_argument("--in_bsfile", dest = "in_bsfile", required = False, help = "The name of the bigsummary file.")
-parser.add_argument("--out_statsfile", dest = "out_statsfile", required = False, help = "The name of the tissue statistics file.")
-parser.add_argument("--freq_type", dest = "freq_type", required = False, help = "The name of the bigsummary file.")
-parser.add_argument("--dfstatsfile", dest = "dfstatsfile", required = False, help = "True or False: do you want a file with the dataframe?")
+parser.add_argument("--data", help = "A csv or gzip file with the data you want to analyse.")
+parser.add_argument("--minexp", required = False, help = "A threshold used to put the least expressed isoform as 'other'.")
+parser.add_argument("--minsamps", required = False, help = "A threshold to determine the minimum of samples to take a gene into account.")
+parser.add_argument("--out_tsdir", required = False, help = "The name of the directory where the tissue summary file will be saved.")
+parser.add_argument("--out_tsfile", required = False, help = "The name of the tissue summary file.")
+parser.add_argument("--out_thresdir", required = False, help = "The name of the directory where all the different tissue summary files will be saved.")
+parser.add_argument("--seqexp", required = False, help = "The difference between the minexp thresholds you want to compare.")
+parser.add_argument("--seqnumsamps", nargs = '+', required = False, help = "The maximum number of samples you want to compare.")
+parser.add_argument("--in_thresdir", required = False, help = "The name of the directory where all the different tissue summary files has been saved by tissuediffthressum.")
+parser.add_argument("--in_tsfile", required = False, help = "The name of the tissue summary file.")
+parser.add_argument("--savefile", required = False, help = "T/F: do you want to save a file with the statistics?")
+parser.add_argument("--out_statsfile", required = False, help = "If savefile = T, the name of the tissue statistics file.")
+parser.add_argument("--in_statsfile", required = False, help = "The name of the tissue statistics file.")
+parser.add_argument("--genetype", nargs = '+', required = False, help = "The concrete gene type you are interested in.")
+parser.add_argument("--drop_tsfile", required = False, help = "T/F: do you want to remove the tissue summary file?")
 
-parser.add_argument("-BS", "--bigsummary", nargs = "*", dest = "bigsummary", help = "Returns a csv file with a conclusion for each gene.")
-#parser.add_argument("-St", "--stats", nargs = "*", dest = "stats", help = "Returns a list with the statistics of the dataframe of 'bigsummary'.")
-#parser.add_argument("-SB", "--summarybarplot", nargs = "*", dest = "sumbar", help = "Returns a barplot with the statistics of the dataframe of 'bigsummary'.")
-#parser.add_argument("-EB", "--exprbarplot", nargs = "*", dest = "exprbar", help = "Returns a list with the statistics of the dataframe of 'bigsummary' and a pie plot for an easy visualization.")
+parser.add_argument("-TSu", "--tissuesummary", nargs = "*", help = "Returns a csv file with a conclusion for each gene.")
+parser.add_argument("-TSt", "--tissuestats", nargs = "*", help = "Returns a list with the statistics of the dataframe of 'tissuesummary'.")
+parser.add_argument("-TDSu", "--tissuediffthressum", nargs = "*", help = "Creates a directory with different tissue summaries, changing the thresholds.")
+parser.add_argument("-TDSt", "--tissuediffthresstats", nargs = "*", help = "Creates a directory with the analysis of all the different tissue summaries created by tissuediffthressum.")
+parser.add_argument("-TAB", "--tissueallbarplot", nargs = "*", help = "Returns a barplot with the statistics of all the genes of the dataframe of 'tissuesummary'.")
+parser.add_argument("-TEB", "--tissueexprbarplot", nargs = "*", help = "Returns a barplot with the statistics of the expressed genes of the dataframe of 'tissuesummary'.")
 
 args = parser.parse_args()
 
 data = args.data
 minexp = args.minexp
-mintotexp = args.mintotexp
 minsamps = args.minsamps
-out_bsdir = args.out_bsdir
-out_bsfile = args.out_bsfile
-dfbsfile = args.dfbsfile
-in_bsfile = args.in_bsfile
+out_tsdir = args.out_tsdir
+out_tsfile = args.out_tsfile
+out_thresdir = args.out_thresdir
+seqexp = args.seqexp
+seqnumsamps = args.seqnumsamps
+in_thresdir = args.in_thresdir
+in_tsfile = args.in_tsfile
+savefile = args.savefile
 out_statsfile = args.out_statsfile
-freq_type = args.freq_type
-dfstatsfile = args.dfstatsfile
+in_statsfile = args.in_statsfile
+genetype = args.genetype
+drop_tsfile = args.drop_tsfile
 
-bigsummary = args.bigsummary
-#stats = args.stats
-#sum_bar = args.sumbar
-#exprbar = args.exprbar
-
-DATA = Functions.reading_data(data)
-
-if out_bsfile != None:
-    out_bsfile = out_bsfile
-else:
-    out_bsfile = '_genes_'
+tissuesummary = args.tissuesummary
+tissuestats = args.tissuestats
+tissuediffthressum = args.tissuediffthressum
+tissuediffthresstats = args.tissuediffthresstats
+tissueallbarplot = args.tissueallbarplot
+tissueexprbarplot = args.tissueexprbarplot
 
 if minexp == None:
     minexp = 0.1
 
-if mintotexp == None:
-    mintotexp = 0.7
-
 if minsamps == None:
     minsamps = 10
 
+if out_tsdir == None:
+    out_tsdir = 'results'
+
+if out_tsfile == None:
+    out_tsfile = ''
+
+if out_thresdir == None:
+    out_thresdir = 'different_thresholds'
+
+if seqexp == None:
+    seqexp = 0.05
+
 minexp = float(minexp)
-mintotexp = float(mintotexp)
 minsamps = int(minsamps)
+seqexp = float(seqexp)
 
-if out_statsfile != None:
-    out_statsfile = out_statsfile
-else:
-    out_statsfile = '_statistics.csv'
+if seqnumsamps != None:
+    seqnumsamps = [int(x) for x in seqnumsamps]
 
-if freq_type == None:
-    freq_type = 'rel'
-
-if dfstatsfile == None:
-    dfstatsfile = 'F'
-
-if dfstatsfile == 'T':
+if savefile == None or savefile == 'T':
+    savefile = 'T'
+    
     if out_statsfile == None:
-        out_statsfile = '_statistics.csv'
+        out_statsfile = ''
 
-if bigsummary != None:
-    if out_bsdir == None:
-        parser.error('An output directory is required.')
+if genetype == None:
+    genetype = ''
 
-    a = Functions.big_summary(DATA, out_bsdir, out_bsfile, minexp, mintotexp, minsamps)
+if drop_tsfile == None:
+    drop_tsfile = 'T'
 
-#if stats != None:
-#    a = Functions.statistics(DATA, in_bsfile, freq_type, out_statsfile, dfstatsfile)
-#
-#if sum_bar != None:
-#    Functions.stats_barplot(DATA, in_bsfile)
-#    
-#elif exprbar != None:
-#    Functions.expr_barplot(DATA, in_bsfile)
+if tissuesummary != None:
+    Functions.tissue_summary(data, out_tsdir, out_tsfile, minexp, minsamps)
+
+elif tissuestats != None:
+    a = Functions.tissue_statistics(in_tsfile, savefile, out_statsfile, genetype, drop_tsfile)
+
+elif tissueallbarplot != None:
+    Functions.tissue_all_barplot(in_statsfile)
+    
+elif tissueexprbarplot != None:
+    Functions.tissue_exp_barplot(in_statsfile)
+
+elif tissuediffthressum != None:
+    Functions.tissue_difthres_summaries(data, seqnumsamps, out_thresdir, seqexp)
+
+elif tissuediffthresstats != None:
+    Functions.tissue_difthres_statistics(in_thresdir, genetype, drop_tsfile)
 
 try:
     if type(a) == pandas.core.frame.DataFrame:

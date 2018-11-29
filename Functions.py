@@ -6,11 +6,12 @@ Created on Fri Oct 19 12:06:44 2018
 """
 import os
 import gzip
-import statistics
+import glob
+import re
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import cProfile
+#import cProfile
 
 def reading_data(csv_file):
     Data = dict()
@@ -81,14 +82,56 @@ def gene_name(all_data, gene):
     
     return(gene2)
 
-def gene_info(all_data, gene):
+def gene_pos(all_data, gene):
+    genes = all_data[0]
+    
+    if type(gene) == int:
+        gene2 = gene
+    elif type(gene) == (str or np.str_):
+        if gene in genes:
+            gene2 = genes.index(gene)
+        else:
+            return('The gene ' + gene + ' is not in your data.')
+    else:
+        return('Incorrect type of element for the gene: ' + str(type(gene)))
+    
+    return(gene2)
+
+def gene_info(all_data, gene, pretty = 'F'):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
         
     if gene2 in genes:
         geneinfo = {}
         geneinfo[gene2] = all_data[1][gene2]
-        return(geneinfo)
+        
+        if pretty == 'T':
+            print('\n' + gene2 + ' - ' + geneinfo[gene2][0] + ' ---> ' + geneinfo[gene2][1] + '\n')
+            transinfo = geneinfo[gene2][3:]
+            
+            transcripts = [trans[0] for trans in transinfo]
+            
+            final_list = []
+            for trans in transinfo:
+                new_trans = [trans[0], trans[1]]
+                
+                for num in trans[2]:
+                    new_trans.append(num)
+                
+                final_list.append(new_trans)
+            
+            pretty_df = {}
+            pretty_df[gene2] = final_list
+            
+            cols = ['Transcript', 'TranscriptType']
+            cols.extend(geneinfo[gene2][2])
+            
+            pretty_df = pretty_df[gene2]
+            df = pd.DataFrame(pretty_df, index = transcripts, columns = cols)
+            df2 = df.drop(['Transcript'], axis = 1)
+            return(df2)
+        else:
+            return(geneinfo)
     else:
         return(gene2)
 
@@ -158,7 +201,7 @@ def gene_statistics(all_data, gene, pretty = 'F'):
             gene_stats[gene2] = genedata + list_stats
             
             if pretty == 'T':
-                print('\n\n\t' + gene2 + ' - ' + genedata[0] + ' ---> ' + genedata[1] + '\n\n')
+                print('\n' + gene2 + ' - ' + genedata[0] + ' ---> ' + genedata[1] + '\n')
                 pretty_df = gene_stats[gene2][4:]
                 df = pd.DataFrame(pretty_df, index = isoforms, columns = ['Transcript', 'TranscriptType', 'Mean', 'CumulativeMean', 'StandardDeviation', 'Q1', 'Median', 'Q3', 'Minimum', 'Maximum'])
                 df2 = df.drop(['Transcript'], axis = 1)
@@ -224,7 +267,7 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
             gene_filt_props[gene2] = genedata + fin_res
             
             if pretty == 'T':
-                print('\n\n\t' + gene2 + ' - ' + genedata[0] + ' ---> ' + genedata[1] + '\n\n')
+                print('\n' + gene2 + ' - ' + genedata[0] + ' ---> ' + genedata[1] + '\n')
                 pretty_df = gene_filt_props[gene2][4:]
                 df = pd.DataFrame(pretty_df, index = results[0], columns = ['Transcript', 'TranscriptType', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
                 df2 = df.drop(['Transcript'], axis = 1)
@@ -234,7 +277,7 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
     else:
         return(gene2)
 
-def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, mintotexp = 0.7, minsamps = 10):
+def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, minsamps = 10):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
@@ -276,17 +319,22 @@ def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, mintotexp = 
         Types = {}
         Types[gene2] = genedata + [cog, transcripts, transcript_types, means, cumu_means, new_means, new_cumu_means]
         
-        if pretty == 'T' and cog not in ('NotExpressed' or 'LowExpressedTranscripts' or 'FewSamples'):
-            print('\n\n\t' + gene2 + ' - ' + genedata[0] + ', ' + genedata[1] + ' ---> ' + cog + '\n\n')
-            df = pd.DataFrame(gene_filt, index = transcripts, columns = ['Transcript', 'TranscriptType', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
-            df2 = df.drop(['Transcript'], axis = 1)
-            return(df2)
+        if pretty == 'T':
+            print('\n' + gene2 + ' - ' + genedata[0] + ', ' + genedata[1] + ' ---> ' + cog)
+            
+            if cog == 'Monoform' or cog == 'Biform' or cog == 'Triform' or cog == 'Multiform':
+                print('\n')
+                df = pd.DataFrame(gene_filt, index = transcripts, columns = ['Transcript', 'TranscriptType', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
+                df2 = df.drop(['Transcript'], axis = 1)
+                return(df2)
+            else:
+                return('')
         else:
             return(Types)
     else:
         return(gene2)
 
-def big_summary(csv_file, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, mintotexp = 0.7, minsamps = 10):
+def tissue_summary(csv_file, out_tsdir = 'results', out_tsfile = '', minexp = 0.1, minsamps = 10):
     Data = dict()    
     lastbar = csv_file.rfind('/')
     file = csv_file[(lastbar + 1):]    
@@ -300,18 +348,24 @@ def big_summary(csv_file, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
         nf = -4    
     tissue = file[ni:nf]
     
-    if out_bsdir[-1] != '/':
-        out_bsdir = out_bsdir + '/'
+    if not os.path.isdir(out_tsdir):
+        os.mkdir(out_tsdir)
     
-    if out_bsfile != '_genes_':
-        bstissuefile = out_bsdir + out_bsfile
+    if out_tsfile == '':
+        minexp_txt = str(round(minexp, 2))
+        minsamps_txt = str(int(minsamps))
+        
+        if len(minexp_txt) < 4:
+            minexp_list = list(minexp_txt)
+            minexp_list.append('0')
+            minexp_txt = ''.join(minexp_list)
+        
+        bstissuefile = out_tsdir + '/' + csv_file[ni:nf] + '_' + minexp_txt + '_' + minsamps_txt + '.csv'
     else:
-        bstissuefile = out_bsdir + tissue + out_bsfile + str(minexp * 100) + '_' + str(mintotexp * 100) + '_' + str(minsamps) + '.csv'
+        bstissuefile = out_tsdir + '/' + out_tsfile
     
-    if not os.path.isdir(out_bsdir):
-        os.mkdir(out_bsdir)
-
     header = ';'.join(['GeneId', 'GeneName', 'GeneType', 'ExpressedSamples', 'NumberOfExpressedSamples', 'GeneClassification', 'Transcripts', 'TranscriptTypes', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
+    
     with gzip.open(csv_file, 'rt') if csv_file.endswith('gz') else open(csv_file) as rd, open(bstissuefile,'w') as wr:
         wr.write(header + '\n')
         
@@ -321,7 +375,7 @@ def big_summary(csv_file, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
         for line in rd:
             ff = line.strip().split('\t')
             if line.startswith('transc'):
-                columns = tuple(ff)
+                columns = ff
                 samp_names = columns[5:]
                 nsamps = len(samp_names)
             else:
@@ -329,14 +383,14 @@ def big_summary(csv_file, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
                 genetype = ff[2]
                 geneid = ff[4]
                 samps = list()
-                samps = [samp_names[i] for i in range(0,nsamps)  if float(ff[i + 5]) >= 0]
+                samps = [samp_names[i] for i in range(0, nsamps)  if float(ff[i + 5]) >= 0]
                 nums  = [float(i) for i in ff[5:]  if float(i) >= 0] 
                 
                 tmp = Data.get(geneid, None)
                 if tmp is None:
                     # process me
                     if len(Data.keys()) > 0:
-                        res = gene_classification([list(Data.keys()), Data, tissue, samp_names] , 0, 'F', minexp, mintotexp, minsamps)
+                        res = gene_classification([list(Data.keys()), Data, tissue, samp_names] , 0, 'F', minexp, minsamps)
                         
                         for k, v in (res.items()):
                             outline = [k]
@@ -348,12 +402,12 @@ def big_summary(csv_file, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
                             print(Data.keys())
                             raise
                         Data = dict()
-                    Data[geneid] = [genename, genetype, tuple(samps), [ff[0], ff[3], tuple(nums)]]
+                    Data[geneid] = [genename, genetype, samps, [ff[0], ff[3], nums]]
                 else:
-                    tmp.append([ff[0], ff[3], tuple(nums)])
+                    tmp.append([ff[0], ff[3], nums])
                     Data[geneid] = tmp
         
-        res = gene_classification([list(Data.keys()),Data, tissue, samp_names] , 0, 'F', minexp, mintotexp, minsamps)
+        res = gene_classification([list(Data.keys()),Data, tissue, samp_names] , 0, 'F', minexp, minsamps)
         for k, v in (res.items()):
             outline = [k]
             tmp_list = [str(x) for x in v]
@@ -362,135 +416,92 @@ def big_summary(csv_file, out_bsdir, out_bsfile = '_genes_', minexp = 0.1, minto
     
     return None
 
-def tissue_statistics(all_data, in_bsfile, freq_type = 'rel', tissuestatsfile = '_statistics.csv', dfstatsfile = 'F'):
-    df = pd.read_csv(in_bsfile, index_col = 0)
+def tissue_statistics(in_tsfile, savefile = 'T', out_statsfile = '', genetype = '', drop_tsfile = 'T'):
+    df = pd.read_csv(in_tsfile, index_col = 0, sep = ';')
+    df2 = pd.crosstab(df.GeneClassification, df.GeneType)
     
-    df['GeneType'] = df.GeneType.astype('category')
-    df['GeneClassification'] = df.GeneClassification.astype('category')
-    df['TranscriptTypes'] = df.TranscriptTypes.astype('category')
+    nrows = df2.shape[0]
+    ncols = df2.shape[1]
     
-    numbs = df.GeneClassification.value_counts()
-    
-    df2 = pd.DataFrame({'TotalCounts' : numbs})
-    df3 = pd.crosstab(df.GeneClassification, df.GeneType)
-    
-    df4 = df2.join(df3)
-    
-    if freq_type == 'abs':
-        final_df = df4
-    elif freq_type == 'rel':
-        final_df = df4 / sum(numbs)
-    
-    if dfstatsfile == 'T':
-        if tissuestatsfile != '_statistics.csv':
-            tissuestatsfile = tissuestatsfile
-        else:
-            tissue = all_data[2]
-            tissuestatsfile = tissue + tissuestatsfile
+    if nrows != 8:
+        if 'Biform' not in df2.index:
+            biform = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
+            df2 = df2.append(biform)
+            df2.rename(index = {0:'Biform'}, inplace = True)
+            
+        if 'FewSamples' not in df2.index:
+            fewsamp = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
+            df2 = df2.append(fewsamp)
+            df2.rename(index = {0:'FewSamples'}, inplace = True)
         
-        final_df.to_csv(tissuestatsfile)
+        if 'LowExpressedTranscripts' not in df2.index:
+            lowexp = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
+            df2 = df2.append(lowexp)
+            df2.rename(index = {0:'LowExpressedTranscripts'}, inplace = True)
         
-    elif dfstatsfile == 'F':
-        return(final_df)
+        if 'Monoform' not in df2.index:
+            monoform = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
+            df2 = df2.append(monoform)
+            df2.rename(index = {0:'Monoform'}, inplace = True)
+        
+        if 'Multiform' not in df2.index:
+            multiform = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
+            df2 = df2.append(multiform)
+            df2.rename(index = {0:'Multiform'}, inplace = True)
+        
+        if 'NotExpressed' not in df2.index:
+            notexp = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
+            df2 = df2.append(notexp)
+            df2.rename(index = {0:'NotExpressed'}, inplace = True)
+        
+        if 'Triform' not in df2.index:
+            triform = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
+            df2 = df2.append(triform)
+            df2.rename(index = {0:'Triform'}, inplace = True)
+    
+    df2.sort_index(inplace = True)
+    
+    if genetype != '':
+        df2 = df2[genetype]
+    
+    df2['Total'] = df2.sum(axis = 1)
+    
+    if drop_tsfile == 'T':
+        os.remove(in_tsfile) 
+    
+    if savefile == 'T':
+        if out_statsfile == '':
+            out_statsfile = in_tsfile[:-4] + '_statistics.csv'
+        
+        df2.to_csv(out_statsfile)
     else:
-        print(dfstatsfile + ' is not an acceptable option for --dfstatsfile.')
+        return(df2)
 
-def all_tissues_analysis(original_dir, pref = '', new_dir = '', minexp = 0.1, mintotexp = 0.7, minsamps = 10):
-    if pref != '' and pref[-1] != '_':
-        pref = pref + '_'
+def tissue_difthres_summaries(csv_file, seqnumsamps, out_thresdir = 'comparing_thresholds', seqexp = 0.05):
+    minexp_seq = np.arange(0, 1, seqexp)
     
-    if new_dir == '':
-        if original_dir[-1] == '/':
-            bsumm_dir = original_dir + pref + 'big_summaries'
-        else:
-            bsumm_dir = original_dir + '/' + pref + 'big_summaries'
-    else:
-        bsumm_dir = new_dir
+    for i in minexp_seq:
+        for j in seqnumsamps:
+            tissue_summary(csv_file, out_tsdir = out_thresdir, out_tsfile = '', minexp = i, minsamps = j)
     
-    if not os.path.isdir(bsumm_dir):
-        os.mkdir(bsumm_dir)
-    
-    os.chdir(original_dir)
-    
-    nfiles = 0
-    for file in os.listdir():
-        if file.startswith(pref) and file.endswith('gz') and 'all' not in file:
-            nfiles += 1
-    
-    print('There are ' + str(nfiles) + ' tissues to analyse.\n')
-    
-    i = 0
-    for file in os.listdir():
-        if 'all' not in file.lower():
-            if file.endswith('gz'):
-                nf = -7
-            elif file.endswith('csv'):
-                nf = -4
-            
-            if pref != '':
-                if pref == 'SMTS_':
-                    ni = 5
-                elif pref == 'SMTSD_':
-                    ni = 6
-                
-                if file.startswith(pref) and file.endswith('gz'):
-                    tissue = file[ni:nf]
-                    
-                    if original_dir[-1] == '/':
-                        tissuepath = original_dir + file
-                    else:
-                        tissuepath = original_dir + '/' + file
-                    
-                    print(tissuepath)
-                    DATA = reading_data(tissuepath)
-                    big_summary(DATA, bsumm_dir, dfbsfile = 'T', out_bsfile = 'BS_' + tissue + '.csv', minexp = minexp, mintotexp = mintotexp, minsamps = minsamps)
-                    
-                    i += 1
-                    print(str(i) + '.- Big summary of the tissue ' + tissue + ': done.')
-            else:
-                if file.endswith('gz'):
-                    tissue = file[:nf]
-                    
-                    if original_dir[-1] == '/':
-                        tissuepath = original_dir + file
-                    else:
-                        tissuepath = original_dir + '/' + file
-                    
-                    print(tissuepath)
-                    DATA = reading_data(tissuepath)
-                    big_summary(DATA, bsumm_dir, dfbsfile = 'T', out_bsfile = 'BS_' + tissue + '.csv', minexp = minexp, mintotexp = mintotexp, minsamps = minsamps)
-                    
-                    i += 1
-                    print(str(i) + '.- Big summary of the tissue ' + tissue + ': done.')
-
-def all_tissues_stats(bigsummaries_dir, allstats_file = 'all_tissues_statistics.csv'):
-    types = ['NotExpressed', 'FewSamples', 'Monoform', 'Biform', 'Triform', 'Multiform']
-    
-    stats = {}
-    for file in os.listdir(bigsummaries_dir):
-        if file != 'Statistics':
-            df = pd.read_csv(bigsummaries_dir + file, engine='python')
-            tissue = file[3:-4]
-            
-            nnexp = df.loc[df['Type'] == 'NotExpressed']['Type'].count()
-            nfew = df.loc[df['Type'] == 'FewSamples']['Type'].count()
-            nmono = df.loc[df['Type'] == 'Monoform']['Type'].count()
-            nbi = df.loc[df['Type'] == 'Biform']['Type'].count()
-            ntri = df.loc[df['Type'] == 'Triform']['Type'].count()
-            nmulti = df.loc[df['Type'] == 'Multiform']['Type'].count()
-            numbs = [nnexp, nfew, nmono, nbi, ntri, nmulti]
-            
-            stats[tissue] = numbs
-    
-    df = pd.DataFrame(stats, index = types)
-    df = df.T
-    df.to_csv(allstats_file)
     return None
 
+def tissue_difthres_statistics(in_thresdir, genetype = '', drop_tsfile = 'T'):
+    if in_thresdir[-1] != '/':
+        in_thresdir = in_thresdir + '/'
+    
+    for file in os.listdir(in_thresdir):
+        infile = in_thresdir + file
+        tissue_statistics(infile, 'T', '', genetype, drop_tsfile)
 
-
-
-
+def tissue_difthres_stats_1file(in_thresdir):
+    if in_thresdir[-1] != '/':
+        in_thresdir = in_thresdir + '/'
+    
+    all_files = glob.glob(in_thresdir + '*statistics.csv')
+    return(sorted(all_files))
+#    for file in all_files:
+#        print(file)
 
 
 
@@ -502,191 +513,234 @@ def all_tissues_stats(bigsummaries_dir, allstats_file = 'all_tissues_statistics.
 
 
 # ----------------------------------------------- PLOTS ----------------------------------------------- #
-def visual_matrix(all_data, gene):
+# --- GENE PLOTS --- #
+def gene_boxplot(all_data, gene, ordered = True):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
     if gene2 in genes:
-        gene_props = gene_info(all_data, gene, 'T')
+        geneinfo = gene_info(all_data, gene)[gene2]
         
-        samp_names = list(gene_props)[2:]
-        nsamps = len(samp_names)
+        nsamps = len(geneinfo[2])
+        
+        if nsamps == 0:
+            return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
+        else:
+            if ordered == True:
+                def takeMedian(elem):
+                    return np.median(elem[2])
+                
+                transcripts = sorted(geneinfo[3:], key = takeMedian, reverse = True)
+            else:
+                transcripts = geneinfo[3:]
+                
+            transnames = [trans[0] for trans in transcripts]
+            numbers = [trans[2] for trans in transcripts]
+            
+            fig, ax = plt.subplots()
+            ax.boxplot(numbers)
+            ax.set_xlabel('Transcripts')
+            ax.set_ylabel('Expression')
+            ax.set_title('Gene ' + gene2)
+            ax.set_xticklabels(transnames, rotation = 'vertical', fontsize = 8)
+            ax.yaxis.grid(True, linestyle = '-', which = 'major', color = 'lightgrey', alpha = 0.5)
+            axes = plt.gca()
+            axes.set_ylim([-0.05, 1])
+            plt.subplots_adjust(bottom = 0.22, top = 0.95)
+            plt.show()
+    else:
+        return(gene2)
+
+def gene_matrix(all_data, gene):
+    gene2 = gene_name(all_data, gene)
+    genes = all_data[0]
+    
+    if gene2 in genes:
+        geneinfo = gene_info(all_data, gene)[gene2]
+        
+        sampnames = all_data[3]
+        nsamps = len(sampnames)
         indx = np.arange(nsamps)
         
-        isoforms = list(gene_props.index)
-        nisos = len(isoforms)
-        
-        indy = np.arange(nisos) + 0.5
+        transcripts = [trans[0] for trans in geneinfo[3:]]
+        ntrans = len(transcripts)
+        indy = np.arange(ntrans) + 0.5
         
         fig, ax = plt.subplots()
         width = 1
         
         acum_vect = [0 for i in range(0, nsamps)]
         sum_vect = [1 for i in range(0, nsamps)]
-            
-        if 'not expressed' in gene_props:
-            for iso in isoforms:
+        
+        if len(geneinfo[2]) == 0:
+            for iso in transcripts:
                 ax.bar(indx, sum_vect, width, bottom = acum_vect, color = 'white', edgecolor = 'gray')
                 acum_vect = tuple(sum(x) for x in zip(acum_vect, sum_vect))
         else:
-            gene_props2 = gene_props.T
-            for iso in isoforms:
+            for trans in geneinfo[3:]:
+                i = 0
                 colors = []
-                for numb in gene_props2[iso][2:]:
-                    if numb > 0:
-                        colors.append('black')
+                for samp in sampnames:
+                    if samp in geneinfo[2]:
+                        if trans[2][i] > 0:
+                            colors.append('blue')
+                        else:
+                            colors.append('white')
+                        i += 1
                     else:
                         colors.append('white')
-                    
+                        
                 ax.bar(indx, sum_vect, width, bottom = acum_vect, color = colors, edgecolor = 'gray')
                 acum_vect = tuple(sum(x) for x in zip(acum_vect, sum_vect))
+                
         
         ax.set_xlabel('Samples')
-        ax.set_ylabel('Isoforms')
+        ax.set_ylabel('Transcripts')
         ax.set_title('Gene ' + gene2)
         ax.set_xticks(indx)
-        ax.set_xticklabels(samp_names, rotation = 'vertical', fontsize = 8)
+        ax.set_xticklabels(sampnames, rotation = 'vertical', fontsize = 8)
         ax.set_yticks(indy)
-        ax.set_yticklabels(isoforms, fontsize = 8)
+        ax.set_yticklabels(transcripts, fontsize = 8)
         plt.subplots_adjust(bottom = 0.22, top = 0.95, left = 0.2)
         plt.show()
     else:
         return(gene2)
 
-def gene_boxplot(all_data, gene, ordered = True):
+def gene_barplot(all_data, gene):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
     if gene2 in genes:
-        gene_props = gene_info(all_data, gene)
+        geneinfo = gene_info(all_data, gene)[gene2]
+        sampnames = geneinfo[2]
+        nsamps = len(sampnames)
         
-        if 'not expressed' in gene_props:
-            return(gene_props)
+        if nsamps == 0:
+            return('The gene ' + gene2 + ' is not expressed in any of the analysed samples.')
         else:
-            samp_names = list(gene_props)[2:]
-            gene_props = gene_props[samp_names]
+            indx = np.arange(nsamps)
             
-            if ordered:
-                gene_props['median'] = gene_props.median(axis = 1)
-                df = gene_props.sort_values(by = 'median', ascending = False).T
-                df2 = df.drop(['median'])
-                ax = df2.plot.box(rot = 90, fontsize = 8)
-            else:
-                ax = gene_props.plot.box(rot = 90, fontsize = 8)
+            fig, ax = plt.subplots()
+            width = 0.75
             
-            ind = list(np.arange(0, 1.1, 0.1))
-            ax.set_yticks(ind)
-            ax.set_title('Distribution of samples of the gene ' + gene2)
+            acum_vect = [0 for i in range(0, nsamps)]
+        
+            for trans in geneinfo[3:]:
+                ax.bar(indx, trans[2], width, bottom = acum_vect, label = trans[0])
+                acum_vect = tuple(sum(x) for x in zip(acum_vect, trans[2]))
+            
+            ax.set_title('Gene ' + gene2)
+            ax.set_xlabel("Samples")
+            ax.set_ylabel("Proportion")
+            ax.set_xticks(indx)
+            ax.set_xticklabels(sampnames, rotation = 'vertical', fontsize = 8)
+            ax.set_ylim([-0.05, 1])
+            plt.subplots_adjust(bottom = 0.22, top = 0.95)
+            plt.legend()
+            plt.show()
+    else:
+        return(gene2)
+
+def gene_filtered_barplot(all_data, gene, minexp = 0.1):
+    gene2 = gene_name(all_data, gene)
+    genes = all_data[0]
+    
+    if gene2 in genes:
+        genefilt = gene_filtered_proportions(all_data, gene, 'F', minexp)
+        
+        if 'not expressed' in genefilt:
+            return(genefilt)
+        else:
+            genefilt = genefilt[gene2]
+            geneinfo = gene_info(all_data, gene)[gene2]
+            sampnames = geneinfo[2]
+            nsamps = len(sampnames)
+            
+            selected_trans = [trans[0] for trans in genefilt[4:-1]]
+            
+            selected_numbs = []
+            for transcript in geneinfo[3:]:
+                if transcript[0] in selected_trans:
+                    selected_numbs.append(transcript)
+            
+            indx = np.arange(nsamps)
+            
+            fig, ax = plt.subplots()
+            width = 0.75
+            
+            acum_vect = [0 for i in range(0, nsamps)]
+        
+            for trans in selected_numbs:
+                ax.bar(indx, trans[2], width, bottom = acum_vect, label = trans[0])
+                acum_vect = tuple(sum(x) for x in zip(acum_vect, trans[2]))
+            
+            sum_vect = [1 for i in range(0, nsamps)]
+            other = tuple(round(num, 8) for num in np.subtract(sum_vect, acum_vect))
+            
+            ax.bar(indx, other, width, bottom = acum_vect, label = 'other')
+                
+            ax.set_xlabel('Samples')
+            ax.set_ylabel('Expression')
+            ax.set_title('Gene ' + gene2)
+            ax.set_xticks(indx)
+            ax.set_xticklabels(sampnames, rotation = 'vertical', fontsize = 8)
             axes = plt.gca()
             axes.set_ylim([-0.05, 1])
-            ax.set_xlabel("Isoforms")
             plt.subplots_adjust(bottom = 0.22, top = 0.95)
+            plt.legend()
             plt.show()
     else:
         return(gene2)
 
-def gene_general_view(all_data, gene):
-    gene2 = gene_name(all_data, gene)
-    genes = all_data[0]
-    
-    if gene2 in genes:
-        gene_props = gene_info(all_data, gene)
-        
-        if 'not expressed' in gene_props:
-            return(gene_props)
-        else:
-            ax = gene_props.T[2:].plot.bar(stacked = True, fontsize = 8)
-            ax.set_title('Distribution of samples of the gene ' + gene2)
-            ax.set_xlabel("Samples")
-            ax.set_ylabel("Proportion")
-            plt.subplots_adjust(bottom = 0.22, top = 0.95)
-            plt.show()
-    else:
-        return(gene2)
+# --- TISSUE PLOTS --- #
 
-def stacked_barplot(all_data, gene, minexp = 0.1):
-    gene2 = gene_name(all_data, gene)
-    genes = all_data[0]
-    
-    if gene2 in genes:
-        gene_props = gene_filtered_proportions(all_data, gene, minexp)
-        
-        if 'not expressed' in gene_props:
-            return(gene_props)
-        else:
-            selected_isos = list(gene_props.index)
-            selected_isos.pop()
-            geneinfo = gene_info(all_data, gene).drop(['gene_type', 'transcript_type'], axis = 1)
-            
-            df = geneinfo.T[selected_isos]
-            other_df = geneinfo.T.drop(selected_isos, axis = 1)
-            df['other'] = other_df.sum(axis = 1)
-            
-            ax = df.plot.bar(stacked = True, fontsize = 8)
-            ax.set_title('Distribution of samples of the gene ' + gene2)
-            ax.set_xlabel("Samples")
-            ax.set_ylabel("Proportion")
-            plt.subplots_adjust(bottom = 0.22, top = 0.95)
-            plt.show()
-    else:
-        return(gene2)
-
-def stats_barplot(all_data, csv_file):
-    stats = statistics(all_data, csv_file, dffile = 'F')
-    tissue = all_data[2]
+def tissue_all_barplot(in_statsfile):
+    stats = pd.read_csv(in_statsfile, index_col = 0)
     
     types = list(stats.index)
-    props = list(stats.Typeprop)
+    counts = list(stats.Total)
+    total = sum(counts)
     
-    numbs = []
-    for count in list(stats.Counts):
-        numbs.append(int(count))
+    props = [count / total for count in counts]
     
     labs = []
     for i in range(0, len(types)):
-        labs.append(types[i] + ': ' + str(numbs[i]))
+        labs.append(types[i] + ': ' + str(counts[i]))
     
     ntypes = len(types)
-    colors = ['C0', 'C9', 'C1', 'C2', 'C3', 'C5']
     
     fig, ax = plt.subplots()
     
-    acum = props[0]
-    ax.bar(1, props[0], 1, label = labs[0], color = colors[0])
-    for i in range(1, ntypes):
-        ax.bar(1, props[i], 1, bottom = acum, label = labs[i], color = colors[i])
+    acum = 0
+    for i in range(0, ntypes):
+        ax.bar(1, props[i], 1, bottom = acum, label = labs[i])
         acum =  acum + props[i]
     
+    ax.set_xlabel(in_statsfile)
     ax.set_ylabel('Proportion')
-    ax.set_title('Isoform distribution of ' + tissue)
+    ax.set_title('All genes distribution')
     ax.set_xticks([0])
     ax.legend()
+    ax.set_ylim([-0.05, 1])
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
     plt.show()
 
-def expr_barplot(all_data, csv_file):
-    stats = statistics(all_data, csv_file, dffile = 'F')
-    tissue = all_data[2]
+def tissue_exp_barplot(in_statsfile):
+    stats = pd.read_csv(in_statsfile, index_col = 0)
+    df = stats.loc[['Biform', 'Monoform', 'Multiform', 'Triform']]
     
-    types = list(stats.index)[2:]
-    props = list(stats.Typeprop)[2:]
+    types = list(df.index)
+    counts = list(df.Total)
+    total = sum(counts)
     
-    numbs = []
-    for count in list(stats.Counts)[2:]:
-        numbs.append(int(count))
-    
-    total = sum(numbs)
-    
-    props = []
-    for numb in numbs:
-        props.append(numb / float(total))
+    props = [count / total for count in counts]
     
     labs = []
     for i in range(0, len(types)):
-        labs.append(types[i] + ': ' + str(numbs[i]))
+        labs.append(types[i] + ': ' + str(counts[i]))
     
     ntypes = len(types)
-    colors = ['C1', 'C2', 'C3', 'C5']
+    colors = ['C0', 'C3', 'C4', 'C6']
     
     fig, ax = plt.subplots()
     
@@ -696,12 +750,56 @@ def expr_barplot(all_data, csv_file):
         ax.bar(1, props[i], 1, bottom = acum, label = labs[i], color = colors[i])
         acum =  acum + props[i]
     
+    ax.set_xlabel(in_statsfile)
     ax.set_ylabel('Proportion')
-    ax.set_title('Isoform distribution of ' + tissue)
+    ax.set_title('Expressed gene distribution')
     ax.set_xticks([0])
     ax.legend()
+    ax.set_ylim([-0.05, 1])
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
     plt.show()
+
+#def tissue_difthres_barplot(in_thresdir, nsamps):
+#    if in_thresdir[-1] != '/':
+#        in_thresdir = in_thresdir + '/'
+#    
+#    all_files = glob.glob(in_thresdir + '*statistics.csv')
+#    
+#    for file in all_files:
+#        underscores = [x.start() for x in re.finditer('_', file)]
+#        minsamps = file[underscores[-2] + 1 : underscores[-1]]
+#        
+#        stats = pd.read_csv(file, index_col = 0)
+#        
+#        types = list(stats.index)
+#        counts = list(stats.Total)
+#        total = sum(counts)
+#        
+#        props = [count / total for count in counts]
+#        
+#        labs = []
+#        for i in range(0, len(types)):
+#            labs.append(types[i] + ': ' + str(counts[i]))
+#        
+#        ntypes = len(types)
+#        
+#        ax = plt.subplot2grid((nsamps, 1), (0, 0))
+#        
+#        acum = 0
+#        for i in range(0, ntypes):
+#            ax.bar(1, props[i], 1, bottom = acum, label = labs[i])
+#            acum =  acum + props[i]
+#        
+#    ax.set_xlabel('Different thresholds')
+#    ax.set_ylabel('Proportion')
+#    ax.set_title('All genes distribution')
+#    ax.set_xticks([0])
+#    ax.legend()
+#    ax.set_ylim([-0.05, 1])
+#    plt.subplots_adjust(bottom = 0.1, top = 0.9)
+#    plt.show()
+
+# --- ALL TISSUES PLOTS --- #
 
 def all_tissues_barplot(stats_filename = 'all_tissues_statistics.csv'):
     df1 = pd.read_csv(stats_filename, index_col = 0)
