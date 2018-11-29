@@ -490,8 +490,8 @@ def tissue_difthres_summaries(csv_file, seqnumsamps, out_thresdir = 'comparing_t
         tissue_summary(csv_file, out_tsdir = out_thresdir, out_tsfile = '', minexp = i, minsamps = j)
         
     import itertools    
-    os.system("taskset -p 0xff %d" % os.getpid())
-    result =  Parallel(n_jobs=num_cores,prefer="threads")(delayed(dummy_func)(i,j) for i,j in list(itertools.product(minexp_seq,seqnumsamps)))
+    #os.system("taskset -p 0xff %d" % os.getpid())
+    result =  Parallel(n_jobs=num_cores,prefer="processes")(delayed(dummy_func)(i,j) for i,j in list(itertools.product(minexp_seq,seqnumsamps)))
 
     
     return None
