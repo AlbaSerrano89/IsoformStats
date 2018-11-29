@@ -364,12 +364,12 @@ def tissue_summary(csv_file, out_tsdir = 'results', out_tsfile = '', minexp = 0.
             minexp_list.append('0')
             minexp_txt = ''.join(minexp_list)
         
-        bstissuefile = out_tsdir + '/' + csv_file[ni:nf] + '_' + minexp_txt + '_' + minsamps_txt + '.csv'
+        bstissuefile = os.path.abspath(out_tsdir) + '/' + os.path.basename(csv_file[ni:nf]) + '_' + minexp_txt + '_' + minsamps_txt + '.csv'
     else:
-        bstissuefile = out_tsdir + '/' + out_tsfile
+        bstissuefile = os.path.abspath(out_tsdir) + '/' + os.path.basename(out_tsfile)
     
     header = ';'.join(['GeneId', 'GeneName', 'GeneType', 'ExpressedSamples', 'NumberOfExpressedSamples', 'GeneClassification', 'Transcripts', 'TranscriptTypes', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
-    bstissuefile=bstissuefile.split('/')[-1] 
+#    bstissuefile=bstissuefile.split('/')[-1] 
     with gzip.open(csv_file, 'rt') if csv_file.endswith('gz') else open(csv_file) as rd, open(bstissuefile,'w') as wr:
         wr.write(header + '\n')
         
