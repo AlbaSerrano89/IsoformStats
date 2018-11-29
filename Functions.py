@@ -179,8 +179,12 @@ def gene_statistics(all_data, gene, pretty = 'F'):
                     sd = 0.0
                 else:
                     sd = np.std(np.array(trans[2]))
-                
-                minim, Q1, med, Q3, maxim = np.percentile(trans[2], [0, 25, 50, 75, 100])
+                try: 
+                    minim, Q1, med, Q3, maxim = np.percentile(trans[2], [0, 25, 50, 75, 100])
+                except:
+                    #print(trans[2])
+                    #raise
+                    minim, Q1, med, Q3, maxim = [-1]*5
                 
                 list_stats.append([iso, isotype, mn, sd, Q1, med, Q3, minim, maxim])
             
@@ -365,7 +369,7 @@ def tissue_summary(csv_file, out_tsdir = 'results', out_tsfile = '', minexp = 0.
         bstissuefile = out_tsdir + '/' + out_tsfile
     
     header = ';'.join(['GeneId', 'GeneName', 'GeneType', 'ExpressedSamples', 'NumberOfExpressedSamples', 'GeneClassification', 'Transcripts', 'TranscriptTypes', 'Mean', 'CumulativeMean', 'NewMean', 'NewCumulativeMean'])
-    
+    bstissuefile=bstissuefile.split('/')[-1] 
     with gzip.open(csv_file, 'rt') if csv_file.endswith('gz') else open(csv_file) as rd, open(bstissuefile,'w') as wr:
         wr.write(header + '\n')
         
