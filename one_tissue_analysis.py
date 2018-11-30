@@ -21,6 +21,8 @@ parser.add_argument("--out_tsfile", required = False, help = "The name of the ti
 parser.add_argument("--out_thresdir", required = False, help = "The name of the directory where all the different tissue summary files will be saved.")
 parser.add_argument("--seqexp", required = False, help = "The difference between the minexp thresholds you want to compare.")
 parser.add_argument("--seqnumsamps", nargs = '+', required = False, help = "The maximum number of samples you want to compare.")
+parser.add_argument("--ncpus", required = False, help = "The number of CPUs you will use.")
+parser.add_argument("--num_cores", required = False, help = "The number of cores you will use.")
 parser.add_argument("--in_thresdir", required = False, help = "The name of the directory where all the different tissue summary files has been saved by tissuediffthressum.")
 parser.add_argument("--in_tsfile", required = False, help = "The name of the tissue summary file.")
 parser.add_argument("--savefile", required = False, help = "T/F: do you want to save a file with the statistics?")
@@ -46,6 +48,8 @@ out_tsfile = args.out_tsfile
 out_thresdir = args.out_thresdir
 seqexp = args.seqexp
 seqnumsamps = args.seqnumsamps
+ncpus = args.ncpus
+num_cores = args.num_cores
 in_thresdir = args.in_thresdir
 in_tsfile = args.in_tsfile
 savefile = args.savefile
@@ -61,12 +65,6 @@ tissuediffthresstats = args.tissuediffthresstats
 tissueallbarplot = args.tissueallbarplot
 tissueexprbarplot = args.tissueexprbarplot
 
-if minexp == None:
-    minexp = 0.1
-
-if minsamps == None:
-    minsamps = 10
-
 if out_tsdir == None:
     out_tsdir = 'results'
 
@@ -79,12 +77,17 @@ if out_thresdir == None:
 if seqexp == None:
     seqexp = 0.05
 
-minexp = float(minexp)
-minsamps = int(minsamps)
 seqexp = float(seqexp)
 
-if seqnumsamps != None:
-    seqnumsamps = [int(x) for x in seqnumsamps]
+if ncpus == None:
+    ncpus = 1
+else:
+    ncpus = int(ncpus)
+
+if num_cores == None:
+    num_cores = 1
+else:
+    num_cores = int(num_cores)
 
 if savefile == None or savefile == 'T':
     savefile = 'T'
@@ -98,20 +101,46 @@ if genetype == None:
 if drop_tsfile == None:
     drop_tsfile = 'T'
 
-if tissuesummary != None:
+if tissuesummary != None:    
+    if minexp == None:
+        minexp = 0.1
+
+    if minsamps == None:
+        minsamps = '10'
+
     Functions.tissue_summary(data, out_tsdir, out_tsfile, minexp, minsamps)
 
 elif tissuestats != None:
     a = Functions.tissue_statistics(in_tsfile, savefile, out_statsfile, genetype, drop_tsfile)
 
 elif tissueallbarplot != None:
-    Functions.tissue_all_barplot(in_statsfile)
+    if minexp == None:
+        minexp = ''
+    else:
+        minexp = float(minexp)
+    
+    if minsamps == None:
+        minsamps = ''
+    else:
+        minsamps = int(minsamps)
+    
+    Functions.tissue_all_barplot(in_statsfile, minexp, minsamps)
     
 elif tissueexprbarplot != None:
-    Functions.tissue_exp_barplot(in_statsfile)
+    if minexp == None:
+        minexp = ''
+    else:
+        minexp = float(minexp)
+    
+    if minsamps == None:
+        minsamps = ''
+    else:
+        minsamps = int(minsamps)
+    
+    Functions.tissue_exp_barplot(in_statsfile, minexp, minsamps)
 
 elif tissuediffthressum != None:
-    Functions.tissue_difthres_summaries(data, seqnumsamps, out_thresdir, seqexp)
+    Functions.tissue_difthres_summaries(data, seqnumsamps, out_thresdir, seqexp, ncpus, num_cores)
 
 elif tissuediffthresstats != None:
     Functions.tissue_difthres_statistics(in_thresdir, genetype, drop_tsfile)
