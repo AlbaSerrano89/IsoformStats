@@ -794,8 +794,8 @@ def tissue_exp_barplot(in_statsfile, minexp = '', minsamps = ''):
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
     plt.show()
 
-def tissue_difthres_barplot(in_statsfile, samplots = ''):
-    stats = pd.read_csv(in_statsfile, index_col = 0)
+def tissue_difthres_barplot(in_thresfile, samplots = ''):
+    stats = pd.read_csv(in_thresfile, index_col = 0)
     
     if samplots == '':
         samps = stats.MinimumSamples.unique()

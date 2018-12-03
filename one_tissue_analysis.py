@@ -30,6 +30,7 @@ parser.add_argument("--out_statsfile", required = False, help = "If savefile = T
 parser.add_argument("--in_statsfile", required = False, help = "The name of the tissue statistics file.")
 parser.add_argument("--genetype", nargs = '+', required = False, help = "The concrete gene type you are interested in.")
 parser.add_argument("--drop_tsfile", required = False, help = "T/F: do you want to remove the tissue summary file?")
+parser.add_argument("--in_thresfile", required = False, help = "The name of the file where the tissue different thresholds statistics file has been saved by tissuediffthresstats.")
 parser.add_argument("--samplots", nargs = '+', required = False, help = "For how many samples do you want to see the histograms?")
 
 parser.add_argument("-TSu", "--tissuesummary", nargs = "*", help = "Returns a csv file with a conclusion for each gene.")
@@ -60,6 +61,7 @@ in_statsfile = args.in_statsfile
 genetype = args.genetype
 drop_tsfile = args.drop_tsfile
 samplots = args.samplots
+in_thresfile = args.in_thresfile
 
 tissuesummary = args.tissuesummary
 tissuestats = args.tissuestats
@@ -157,7 +159,7 @@ elif tissuediffthresstats != None:
     Functions.tissue_difthres_statistics(in_thresdir, genetype, drop_tsfile)
 
 elif tissuediffthresplot != None:
-    Functions.tissue_difthres_barplot(in_thresdir, samplots)
+    Functions.tissue_difthres_barplot(in_thresfile, samplots)
 
 try:
     if type(a) == pandas.core.frame.DataFrame:
