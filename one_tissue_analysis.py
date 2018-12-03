@@ -159,7 +159,7 @@ elif tissuediffthresstats != None:
     Functions.tissue_difthres_statistics(in_thresdir, genetype, drop_tsfile)
 
 elif tissuediffthresplot != None:
-    Functions.tissue_difthres_barplot(in_thresfile, samplots)
+    Functions.tissue_difthres_barplot(in_thresfile, genetype, samplots)
 
 try:
     if type(a) == pandas.core.frame.DataFrame:

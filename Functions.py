@@ -795,8 +795,11 @@ def tissue_exp_barplot(in_statsfile, minexp = '', minsamps = ''):
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
     plt.show()
 
-def tissue_difthres_barplot(in_thresfile, samplots = ''):
+def tissue_difthres_barplot(in_thresfile, genetype = '', samplots = ''):
     stats = pd.read_csv(in_thresfile, index_col = 0)
+    
+    if genetype != '':
+        stats = stats[['MinimumSamples', 'MinimumExpression', genetype]]
     
     if samplots == '':
         samps = stats.MinimumSamples.unique()
@@ -822,7 +825,7 @@ def tissue_difthres_barplot(in_thresfile, samplots = ''):
             stats3 = stats2.loc[stats2.MinimumExpression == j]
             
             types = list(stats3.index)
-            counts = list(stats3.Total)
+            counts = stats3[genetype]
             total = sum(counts)
             
             props = [count / total for count in counts]
@@ -850,7 +853,7 @@ def tissue_difthres_barplot(in_thresfile, samplots = ''):
     plt.subplots_adjust(bottom = 0.18, top = 0.93, right = 0.98)
     plt.show()
 
-def all_tissues_barplot(stats_directory, minexp, minsamps):
+def all_tissues_barplot(stats_directory, minexp, minsamps, genetype = ''):
     if stats_directory[-1] != '/':
         stats_directory = stats_directory + '/'
     
