@@ -9,8 +9,9 @@ import gzip
 from joblib import Parallel, delayed
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
+from pylab import gcf
 
 def reading_data(csv_file):
     Data = dict()
@@ -711,6 +712,9 @@ def tissue_all_barplot(in_statsfile, minexp = '', minsamps = ''):
         stats = stats.loc[stats.MinimumExpression == minexp]
         stats = stats.loc[stats.MinimumSamples == minsamps]
     
+    minexp_txt = str(stats.MinimumExpression[0])
+    minsamps_txt = str(stats.MinimumSamples[0])
+    
     stats = stats.drop(['MinimumExpression', 'MinimumSamples'], axis = 1)
     
     types = list(stats.index)
@@ -732,11 +736,7 @@ def tissue_all_barplot(in_statsfile, minexp = '', minsamps = ''):
         ax5.bar(1, props[i], 1, bottom = acum, label = labs[i])
         acum =  acum + props[i]
     
-    if minexp != '':
-        ax5.set_xlabel('MinimumExpression: ' + str(minexp) + '\nMinimumSamples: ' + str(minsamps))
-    else:
-        ax5.set_xlabel(os.path.basename(in_statsfile))
-    
+    ax5.set_xlabel('MinimumExpression: ' + minexp_txt + '\nMinimumSamples: ' + minsamps_txt)
     ax5.set_ylabel('Proportion')
     ax5.set_title('All genes distribution')
     ax5.set_xticks([0])
@@ -758,6 +758,9 @@ def tissue_exp_barplot(in_statsfile, minexp = '', minsamps = ''):
     if minexp != '':
         stats = stats.loc[stats.MinimumExpression == minexp]
         stats = stats.loc[stats.MinimumSamples == minsamps]
+    
+    minexp_txt = str(stats.MinimumExpression[0])
+    minsamps_txt = str(stats.MinimumSamples[0])
     
     stats = stats.drop(['MinimumExpression', 'MinimumSamples'], axis = 1)
     df = stats.loc[['Monoform', 'Biform', 'Triform', 'Multiform']]
@@ -782,11 +785,7 @@ def tissue_exp_barplot(in_statsfile, minexp = '', minsamps = ''):
         ax6.bar(1, props[i], 1, bottom = acum, label = labs[i])
         acum =  acum + props[i]
     
-    if minexp != '':
-        ax6.set_xlabel('MinimumExpression: ' + str(minexp) + '\nMinimumSamples: ' + str(minsamps))
-    else:
-        ax6.set_xlabel(os.path.basename(in_statsfile))
-    
+    ax6.set_xlabel('MinimumExpression: ' + minexp_txt + '\nMinimumSamples: ' + minsamps_txt)
     ax6.set_ylabel('Proportion')
     ax6.set_title('Expressed gene distribution')
     ax6.set_xticks([0])
@@ -832,14 +831,22 @@ def tissue_difthres_barplot(in_statsfile, samplots = ''):
             
             m += 1
         
-        ax7.set_ylabel('Proportion')
-        ax7.set_title('Minimum of samples: ' + str(i))
-        ax7.set_xticks(ind)
-        ax7.set_xticklabels(types, rotation = 'vertical', fontsize = 8)
+        ax7.set_ylabel('Min. samples: ' + str(i), rotation = 'horizontal', fontsize = 10, labelpad = 50)
+        
+        if i == samps[-1]:
+            ax7.set_xticks(ind)
+            ax7.set_xticklabels(types, rotation = 'vertical', fontsize = 8)
+        else:
+            ax7.set_xticks(ind)
+            ticks = ['' for x in range(7)]
+            ax7.set_xticklabels(ticks, rotation = 'vertical', fontsize = 8)
         
         l += 1
     
-    plt.subplots_adjust(bottom = 0.1, top = 0.9)
+    fig = gcf()
+    fig.suptitle('Comparing the different thresholds', fontsize = 14)
+    
+    plt.subplots_adjust(bottom = 0.18, top = 0.93, right = 0.98)
     plt.show()
 
 

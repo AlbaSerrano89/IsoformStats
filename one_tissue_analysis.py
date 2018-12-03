@@ -30,6 +30,7 @@ parser.add_argument("--out_statsfile", required = False, help = "If savefile = T
 parser.add_argument("--in_statsfile", required = False, help = "The name of the tissue statistics file.")
 parser.add_argument("--genetype", nargs = '+', required = False, help = "The concrete gene type you are interested in.")
 parser.add_argument("--drop_tsfile", required = False, help = "T/F: do you want to remove the tissue summary file?")
+parser.add_argument("--samplots", nargs = '+', required = False, help = "For how many samples do you want to see the histograms?")
 
 parser.add_argument("-TSu", "--tissuesummary", nargs = "*", help = "Returns a csv file with a conclusion for each gene.")
 parser.add_argument("-TSt", "--tissuestats", nargs = "*", help = "Returns a list with the statistics of the dataframe of 'tissuesummary'.")
@@ -37,6 +38,7 @@ parser.add_argument("-TDSu", "--tissuediffthressum", nargs = "*", help = "Create
 parser.add_argument("-TDSt", "--tissuediffthresstats", nargs = "*", help = "Creates a directory with the analysis of all the different tissue summaries created by tissuediffthressum.")
 parser.add_argument("-TAB", "--tissueallbarplot", nargs = "*", help = "Returns a barplot with the statistics of all the genes of the dataframe of 'tissuesummary'.")
 parser.add_argument("-TEB", "--tissueexprbarplot", nargs = "*", help = "Returns a barplot with the statistics of the expressed genes of the dataframe of 'tissuesummary'.")
+parser.add_argument("-TDB", "--tissuediffthresplot", nargs = "*", help = "Returns a set of histograms with a comparison of the different threshold results.")
 
 args = parser.parse_args()
 
@@ -57,6 +59,7 @@ out_statsfile = args.out_statsfile
 in_statsfile = args.in_statsfile
 genetype = args.genetype
 drop_tsfile = args.drop_tsfile
+samplots = args.samplots
 
 tissuesummary = args.tissuesummary
 tissuestats = args.tissuestats
@@ -64,6 +67,9 @@ tissuediffthressum = args.tissuediffthressum
 tissuediffthresstats = args.tissuediffthresstats
 tissueallbarplot = args.tissueallbarplot
 tissueexprbarplot = args.tissueexprbarplot
+tissuediffthresplot = args.tissuediffthresplot
+
+# ---------------------- Starting parameters ---------------------- #
 
 if out_tsdir == None:
     out_tsdir = 'results'
@@ -100,6 +106,11 @@ if genetype == None:
 
 if drop_tsfile == None:
     drop_tsfile = 'T'
+
+if samplots == None:
+    samplots = ''
+
+# ---------------------- Functions ---------------------- #
 
 if tissuesummary != None:    
     if minexp == None:
@@ -144,6 +155,9 @@ elif tissuediffthressum != None:
 
 elif tissuediffthresstats != None:
     Functions.tissue_difthres_statistics(in_thresdir, genetype, drop_tsfile)
+
+elif tissuediffthresplot != None:
+    Functions.tissue_difthres_barplot(in_thresdir, samplots)
 
 try:
     if type(a) == pandas.core.frame.DataFrame:
