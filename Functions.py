@@ -481,11 +481,11 @@ def tissue_statistics(in_tsfile, savefile = 'T', out_statsfile = '', genetype = 
     else:
         return(df2)
 
-def tissue_difthres_summaries(csv_file, seqnumsamps, out_thresdir = 'comparing_thresholds', seqexp = 0.05, ncpus = 1, num_cores = 1):
+def tissue_difthres_summaries(csv_file, seqnumsamps, out_thresdir = 'different_thresholds', seqexp = 0.05, ncpus = 1, num_cores = 1):
     minexp_seq = np.arange(0, 1, seqexp)
     
-    maxlen = max([len(x) for x in seqnumsamps])
-    seqnumsamps_new = [x.rjust(maxlen,'0') for x in seqnumsamps]
+    maxlen = max([len(str(x)) for x in seqnumsamps])
+    seqnumsamps_new = [str(x).rjust(maxlen, '0') for x in seqnumsamps]
     
     def dummy_func(i, j):
         tissue_summary(csv_file, out_tsdir = out_thresdir, out_tsfile = '', minexp = i, minsamps_txt = j)
