@@ -799,12 +799,18 @@ def tissue_difthres_barplot(in_thresfile, genetype = '', samplots = ''):
     stats = pd.read_csv(in_thresfile, index_col = 0)
     
     if genetype != '':
-        stats = stats[['MinimumSamples', 'MinimumExpression', genetype]]
-    
+        stats1 = stats[['MinimumSamples', 'MinimumExpression']]
+        stats2 = stats[genetype]
+        stats3 = stats2.sum(axis = 1)
+        stats = pd.concat([stats1, stats2], axis = 1, sort = False)
+        stats['Total'] = stats3
+        
     if samplots == '':
         samps = stats.MinimumSamples.unique()
     else:
         samps = [int(x) for x in samplots]
+    
+    fig7 = plt.figure()
     
     colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6']
     
@@ -813,24 +819,24 @@ def tissue_difthres_barplot(in_thresfile, genetype = '', samplots = ''):
     
     l = 0
     for i in samps:
-        stats2 = stats.loc[stats.MinimumSamples == i]
-        expres = stats2.MinimumExpression.unique()
+        stats3 = stats.loc[stats.MinimumSamples == i]
+        expres = stats3.MinimumExpression.unique()
         
         lim = (len(expres) - 1) / 2
         
-        ax7 = plt.subplot2grid((len(samps), 1), (l, 0))
+        ax7 = fig7.add_subplot(len(samps), 1, l + 1)
         
         m = 0
         for j in expres:
-            stats3 = stats2.loc[stats2.MinimumExpression == j]
+            stats4 = stats3.loc[stats3.MinimumExpression == j]
             
-            types = list(stats3.index)
-            counts = stats3[genetype]
+            types = list(stats4.index)
+            counts = stats4.Total
             total = sum(counts)
             
             props = [count / total for count in counts]
             
-            for k in range(7):
+            for k in ind:
                 ax7.bar(ind[k] + (m - lim) * width/len(expres), props[k], width/len(expres), color = colors[k])
             
             m += 1
@@ -848,7 +854,12 @@ def tissue_difthres_barplot(in_thresfile, genetype = '', samplots = ''):
         l += 1
     
     fig = gcf()
-    fig.suptitle('Comparing the different thresholds', fontsize = 14)
+    
+    if genetype == '':
+        fig.suptitle('Comparing the different thresholds', fontsize = 14)
+    else:
+        gtps = '\n'.join(genetype)
+        fig.suptitle('Comparing the different thresholds for:\n' + gtps, fontsize = 10)
     
     plt.subplots_adjust(bottom = 0.18, top = 0.93, right = 0.98)
     plt.show()
