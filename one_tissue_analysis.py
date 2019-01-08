@@ -117,6 +117,8 @@ if samplots == None:
 if tissuesummary != None:    
     if minexp == None:
         minexp = 0.1
+    else:
+        minexp=float(args.minexp)
 
     if minsamps == None:
         minsamps = '10'

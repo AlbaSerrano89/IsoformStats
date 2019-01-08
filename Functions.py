@@ -873,57 +873,73 @@ def all_tissues_barplot(stats_directory, minexp, minsamps, genetype = ''):
         df1 = pd.read_csv(stats_directory + file, index_col = 0)
         df1 = df1.loc[df1.MinimumExpression == minexp]
         df1 = df1.loc[df1.MinimumSamples == minsamps]
-        df1 = df1.Total
-        df = df.append(df1.T)
-        df.rename(index = {'Total': file[:-15]}, inplace = True)    
+        if genetype == '':
+           df1 = df1.Total
+           df = df.append(df1.T)
+           df.rename(index = {'Total': file[:-15]}, inplace = True)  
+        else:
+           df1 = df1[genetype[0]]
+           df = df.append(df1.T)
+           df.rename(index = {genetype[0]: file[:-15]}, inplace = True)  
+        
+        #print(df)
+          
     
     df = df[['Monoform', 'Biform', 'Triform', 'Multiform', 'NotExpressed', 'FewSamples', 'LowExpressedTranscripts']]
+    
+    # df = df[['Monoform', 'Biform', 'Triform', 'Multiform']]
     
     df2 = df.T
     
     types = list(df)
     tissues = list(df.index)
-    
     total_col = {}
     for tissue in tissues:
         total_col[tissue] = sum(df2[tissue])
-    
+
     props_dict = {}
     for tissue in tissues:
         props_tiss = []
         for numbs in list(df2[tissue]):
-            props_tiss.append(numbs / total_col[tissue])
+            props_tiss.append(numbs /max(1,total_col[tissue]))
         
         props_dict[tissue] = props_tiss
-    
+
     props_df1 = pd.DataFrame(props_dict, index = types)
     props_df2 = props_df1.T
     
     fig, ax8 = plt.subplots()
-    ind = np.arange(len(tissues))
-    width = 0.5
-    colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6']
-    
-    props_vect = []
-    for typegene in types:
-        props_vect.append(list(props_df2[typegene]))
-    
-    acum_vect = props_vect[0]
-
-    ax8.barh(ind, props_vect[0], width, label = types[0], color = colors[0])
-    for i in range(1, len(types)):
-        ax8.barh(ind, props_vect[i], width, left = acum_vect, label = types[i], color = colors[i])
-        acum_vect = tuple(sum(x) for x in zip(acum_vect, props_vect[i]))
-    
+    props_df2.plot(kind='barh',stacked=True, ax =ax8)
+    ax8.legend(loc=9, bbox_to_anchor=(0.5, -0.1), ncol=4)
     ax8.set_xlabel('Minimum expression: ' + str(minexp) + '\nMinimum samples: ' + str(minsamps))
-    ax8.set_ylabel('Tissues')
-    ax8.set_title('Counts of the analysis')
-    ax8.set_yticks(ind)
-    ax8.set_yticklabels(tissues, fontsize = 8)
-    ax8.legend()
-    ax8.set_xlim([-0.05, 1])
-    plt.subplots_adjust(bottom = 0.18, top = 0.93, right = 0.98)
+    fig.subplots_adjust(bottom=0.15,right=1,left=0.1)
     plt.show()
+
+    # fig, ax8 = plt.subplots()
+    # ind = np.arange(len(tissues))
+    # width = 0.5
+    # colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6']
+    # 
+    # props_vect = []
+    # for typegene in types:
+    #     props_vect.append(list(props_df2[typegene]))
+    # 
+    # acum_vect = props_vect[0]
+    # 
+    # ax8.barh(ind, props_vect[0], width, label = types[0], color = colors[0])
+    # for i in range(1, len(types)):
+    #     ax8.barh(ind, props_vect[i], width, left = acum_vect, label = types[i], color = colors[i])
+    #     acum_vect = tuple(sum(x) for x in zip(acum_vect, props_vect[i]))
+    # 
+    # ax8.set_xlabel('Minimum expression: ' + str(minexp) + '\nMinimum samples: ' + str(minsamps))
+    # ax8.set_ylabel('Tissues')
+    # ax8.set_title('Counts of the analysis')
+    # ax8.set_yticks(ind)
+    # ax8.set_yticklabels(tissues, fontsize = 8)
+    # ax8.legend()
+    # ax8.set_xlim([-0.05, 1])
+    # plt.subplots_adjust(bottom = 0.18, top = 0.93, right = 0.98)
+    # plt.show()
 
 
 

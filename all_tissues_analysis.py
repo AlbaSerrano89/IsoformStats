@@ -28,5 +28,5 @@ minsamps = int(minsamps)
 
 if genetype == None:
     genetype = ''
-
+print( genetype)
 Functions.all_tissues_barplot(statsdir, minexp, minsamps, genetype)
