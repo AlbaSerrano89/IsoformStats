@@ -289,7 +289,7 @@ def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, minsamps = 1
             if 'not expressed' in gene_filt_props:
                 cog = 'NotExpressed'
             else:
-                cog = 'LowExpressedTranscripts'
+                cog = 'LowExpressed'
         else:
             if genedata[3] < minsamps:
                 transcripts = transcript_types = means = cumu_means = new_means = new_cumu_means = '-'
@@ -452,10 +452,10 @@ def tissue_statistics(in_tsfile, savefile = 'T', out_statsfile = '', genetype = 
             df2 = df2.append(fewsamp)
             df2.rename(index = {0:'FewSamples'}, inplace = True)
         
-        if 'LowExpressedTranscripts' not in df2.index:
+        if 'LowExpressed' not in df2.index:
             lowexp = pd.DataFrame([[0 for i in range(0, ncols)]], dtype = "int", columns = df2.columns)
             df2 = df2.append(lowexp)
-            df2.rename(index = {0:'LowExpressedTranscripts'}, inplace = True)
+            df2.rename(index = {0:'LowExpressed'}, inplace = True)
     
     df2.sort_index(inplace = True)
     
@@ -467,7 +467,7 @@ def tissue_statistics(in_tsfile, savefile = 'T', out_statsfile = '', genetype = 
     df2.insert(1, 'MinimumSamples', [minsamp for i in range(0, 7)])
     
     df2 = df2.T
-    df2 = df2[['Monoform', 'Biform', 'Triform', 'Multiform', 'NotExpressed', 'FewSamples', 'LowExpressedTranscripts']]
+    df2 = df2[['Monoform', 'Biform', 'Triform', 'Multiform', 'NotExpressed', 'FewSamples', 'LowExpressed']]
     df2 = df2.T
     
     if drop_tsfile == 'T':
@@ -487,6 +487,9 @@ def tissue_difthres_summaries(csv_file, seqnumsamps, out_thresdir = 'different_t
     maxlen = max([len(str(x)) for x in seqnumsamps])
     seqnumsamps_new = [str(x).rjust(maxlen, '0') for x in seqnumsamps]
     
+    if not os.path.isdir(out_thresdir):
+        os.mkdir(out_thresdir)
+    
     def dummy_func(i, j):
         tissue_summary(csv_file, out_tsdir = out_thresdir, out_tsfile = '', minexp = i, minsamps_txt = j)
     
@@ -503,10 +506,34 @@ def tissue_difthres_statistics(in_thresdir, genetype = '', drop_tsfile = 'T'):
         infile = in_thresdir + file
         df = df.append(tissue_statistics(infile, 'F', '', genetype, drop_tsfile))
     
-    
     tissue_list = os.path.basename(infile).split('_')[:-2]
     tissue = '_'.join(tissue_list)
     df.to_csv(in_thresdir + tissue + '_statistics.csv')
+
+def all_tissues_difthres_statistics(in_thresdir, stats_dir = 'diffthres_stats_alltissues/', genetype = '', drop_tsfile = 'T'):
+    if in_thresdir[-1] != '/':
+        in_thresdir = in_thresdir + '/'
+    
+    if not os.path.isdir(stats_dir):
+        os.mkdir(stats_dir)
+    
+    beginnings = []
+    for file in sorted(os.listdir(in_thresdir)):
+        tissue = '_'.join(file.split('_')[:-2])
+        beginnings.append(tissue)
+    
+    beginnings = sorted(list(set(beginnings)))
+    for tissue in beginnings:
+        df = pd.DataFrame()
+        for file in sorted(os.listdir(in_thresdir)):
+            if file.startswith(tissue):
+                infile = in_thresdir + file
+                df = df.append(tissue_statistics(infile, 'F', '', genetype, drop_tsfile))
+        
+        df.to_csv(stats_dir + tissue + '_statistics.csv')
+
+
+
 
 
 
@@ -521,7 +548,7 @@ def tissue_difthres_statistics(in_thresdir, genetype = '', drop_tsfile = 'T'):
 
 # --- GENE PLOTS --- #
 
-def gene_boxplot(all_data, gene, ordered = True):
+def gene_boxplot(all_data, gene, filename, ordered = True):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
@@ -552,12 +579,12 @@ def gene_boxplot(all_data, gene, ordered = True):
             ax1.set_xticklabels(transnames, rotation = 'vertical', fontsize = 8)
             ax1.yaxis.grid(True, linestyle = '-', which = 'major', color = 'lightgrey', alpha = 0.5)
             ax1.set_ylim([-0.05, 1])
-            plt.subplots_adjust(bottom = 0.22, top = 0.95)
-            plt.show()
+            plt.subplots_adjust(bottom = 0.32, top = 0.95)
+            plt.savefig(filename)
     else:
         return(gene2)
 
-def gene_matrix(all_data, gene):
+def gene_matrix(all_data, gene, filename):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
@@ -607,12 +634,12 @@ def gene_matrix(all_data, gene):
         ax2.set_xticklabels(sampnames, rotation = 'vertical', fontsize = 8)
         ax2.set_yticks(indy)
         ax2.set_yticklabels(transcripts, fontsize = 8)
-        plt.subplots_adjust(bottom = 0.22, top = 0.95, left = 0.2)
-        plt.show()
+        plt.subplots_adjust(bottom = 0.41, top = 0.95, left = 0.25)
+        plt.savefig(filename)
     else:
         return(gene2)
 
-def gene_barplot(all_data, gene):
+def gene_barplot(all_data, gene, filename):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
@@ -641,13 +668,13 @@ def gene_barplot(all_data, gene):
             ax3.set_xticks(indx)
             ax3.set_xticklabels(sampnames, rotation = 'vertical', fontsize = 8)
             ax3.set_ylim([-0.05, 1])
-            plt.subplots_adjust(bottom = 0.22, top = 0.95)
+            plt.subplots_adjust(bottom = 0.41, top = 0.95)
             plt.legend()
-            plt.show()
+            plt.savefig(filename)
     else:
         return(gene2)
 
-def gene_filtered_barplot(all_data, gene, minexp = 0.1):
+def gene_filtered_barplot(all_data, gene, filename, minexp = 0.1):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
@@ -691,15 +718,15 @@ def gene_filtered_barplot(all_data, gene, minexp = 0.1):
             ax4.set_xticks(indx)
             ax4.set_xticklabels(sampnames, rotation = 'vertical', fontsize = 8)
             ax4.set_ylim([-0.05, 1])
-            plt.subplots_adjust(bottom = 0.22, top = 0.95)
+            plt.subplots_adjust(bottom = 0.41, top = 0.95)
             plt.legend()
-            plt.show()
+            plt.savefig(filename)
     else:
         return(gene2)
 
 # --- TISSUE PLOTS --- #
 
-def tissue_all_barplot(in_statsfile, minexp = '', minsamps = ''):
+def tissue_all_barplot(in_statsfile, filename, minexp = '', minsamps = ''):
     if minexp == '' and minsamps != '':
         print('ERROR: if you write a minimum number of samples, you must write a minimum expression.')
         return
@@ -744,9 +771,9 @@ def tissue_all_barplot(in_statsfile, minexp = '', minsamps = ''):
     ax5.legend()
     ax5.set_ylim([-0.05, 1])
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
-    plt.show()
+    plt.savefig(filename)
 
-def tissue_exp_barplot(in_statsfile, minexp = '', minsamps = ''):
+def tissue_exp_barplot(in_statsfile, filename, minexp = '', minsamps = ''):
     if minexp == '' and minsamps != '':
         print('ERROR: if you write a minimum number of samples, you must write a minimum expression.')
         return
@@ -793,9 +820,9 @@ def tissue_exp_barplot(in_statsfile, minexp = '', minsamps = ''):
     ax6.legend()
     ax6.set_ylim([-0.05, 1])
     plt.subplots_adjust(bottom = 0.1, top = 0.9)
-    plt.show()
+    plt.savefig(filename)
 
-def tissue_difthres_barplot(in_thresfile, genetype = '', samplots = ''):
+def tissue_difthres_barplot(in_thresfile, filename, genetype = '', samplots = ''):
     stats = pd.read_csv(in_thresfile, index_col = 0)
     
     if genetype != '':
@@ -861,10 +888,12 @@ def tissue_difthres_barplot(in_thresfile, genetype = '', samplots = ''):
         gtps = '\n'.join(genetype)
         fig.suptitle('Comparing the different thresholds for:\n' + gtps, fontsize = 10)
     
-    plt.subplots_adjust(bottom = 0.18, top = 0.93, right = 0.98)
-    plt.show()
+    plt.subplots_adjust(bottom = 0.2, top = 0.93, right = 0.98, left = 0.25)
+    plt.savefig(filename)
 
-def all_tissues_barplot(stats_directory, minexp, minsamps, genetype = ''):
+# --- ALL TISSUES PLOTS --- #
+
+def all_tissues_barplot(stats_directory, filename, minexp, minsamps, genetype = ''):
     if stats_directory[-1] != '/':
         stats_directory = stats_directory + '/'
     
@@ -873,73 +902,57 @@ def all_tissues_barplot(stats_directory, minexp, minsamps, genetype = ''):
         df1 = pd.read_csv(stats_directory + file, index_col = 0)
         df1 = df1.loc[df1.MinimumExpression == minexp]
         df1 = df1.loc[df1.MinimumSamples == minsamps]
-        if genetype == '':
-           df1 = df1.Total
-           df = df.append(df1.T)
-           df.rename(index = {'Total': file[:-15]}, inplace = True)  
-        else:
-           df1 = df1[genetype[0]]
-           df = df.append(df1.T)
-           df.rename(index = {genetype[0]: file[:-15]}, inplace = True)  
-        
-        #print(df)
-          
+        df1 = df1.Total
+        df = df.append(df1.T)
+        df.rename(index = {'Total': file[:-15]}, inplace = True)    
     
-    df = df[['Monoform', 'Biform', 'Triform', 'Multiform', 'NotExpressed', 'FewSamples', 'LowExpressedTranscripts']]
-    
-    # df = df[['Monoform', 'Biform', 'Triform', 'Multiform']]
+    df = df[['Monoform', 'Biform', 'Triform', 'Multiform', 'NotExpressed', 'FewSamples', 'LowExpressed']]
     
     df2 = df.T
     
     types = list(df)
     tissues = list(df.index)
+    
     total_col = {}
     for tissue in tissues:
         total_col[tissue] = sum(df2[tissue])
-
+    
     props_dict = {}
     for tissue in tissues:
         props_tiss = []
         for numbs in list(df2[tissue]):
-            props_tiss.append(numbs /max(1,total_col[tissue]))
+            props_tiss.append(numbs / total_col[tissue])
         
         props_dict[tissue] = props_tiss
-
+    
     props_df1 = pd.DataFrame(props_dict, index = types)
     props_df2 = props_df1.T
     
     fig, ax8 = plt.subplots()
-    props_df2.plot(kind='barh',stacked=True, ax =ax8)
-    ax8.legend(loc=9, bbox_to_anchor=(0.5, -0.1), ncol=4)
-    ax8.set_xlabel('Minimum expression: ' + str(minexp) + '\nMinimum samples: ' + str(minsamps))
-    fig.subplots_adjust(bottom=0.15,right=1,left=0.1)
-    plt.show()
+    ind = np.arange(len(tissues))
+    width = 0.5
+    colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6']
+    
+    props_vect = []
+    for typegene in types:
+        props_vect.append(list(props_df2[typegene]))
+    
+    acum_vect = props_vect[0]
 
-    # fig, ax8 = plt.subplots()
-    # ind = np.arange(len(tissues))
-    # width = 0.5
-    # colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6']
-    # 
-    # props_vect = []
-    # for typegene in types:
-    #     props_vect.append(list(props_df2[typegene]))
-    # 
-    # acum_vect = props_vect[0]
-    # 
-    # ax8.barh(ind, props_vect[0], width, label = types[0], color = colors[0])
-    # for i in range(1, len(types)):
-    #     ax8.barh(ind, props_vect[i], width, left = acum_vect, label = types[i], color = colors[i])
-    #     acum_vect = tuple(sum(x) for x in zip(acum_vect, props_vect[i]))
-    # 
-    # ax8.set_xlabel('Minimum expression: ' + str(minexp) + '\nMinimum samples: ' + str(minsamps))
-    # ax8.set_ylabel('Tissues')
-    # ax8.set_title('Counts of the analysis')
-    # ax8.set_yticks(ind)
-    # ax8.set_yticklabels(tissues, fontsize = 8)
-    # ax8.legend()
-    # ax8.set_xlim([-0.05, 1])
-    # plt.subplots_adjust(bottom = 0.18, top = 0.93, right = 0.98)
-    # plt.show()
+    ax8.barh(ind, props_vect[0], width, label = types[0], color = colors[0])
+    for i in range(1, len(types)):
+        ax8.barh(ind, props_vect[i], width, left = acum_vect, label = types[i], color = colors[i])
+        acum_vect = tuple(sum(x) for x in zip(acum_vect, props_vect[i]))
+    
+    ax8.set_xlabel('Minimum expression: ' + str(minexp) + '\nMinimum samples: ' + str(minsamps))
+    ax8.set_ylabel('Tissues')
+    ax8.set_title('Counts of the analysis')
+    ax8.set_yticks(ind)
+    ax8.set_yticklabels(tissues, fontsize = 8)
+    ax8.legend()
+    ax8.set_xlim([-0.05, 1])
+    plt.subplots_adjust(bottom = 0.18, top = 0.93, left = 0.25, right = 0.98)
+    plt.savefig(filename)
 
 
 

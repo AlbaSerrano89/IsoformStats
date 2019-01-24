@@ -20,9 +20,10 @@ parser.add_argument("--dftype", required = False, help = "Type of answer: dictio
 parser.add_argument("--ordered", required = False, help = "Do you want the barplot ordered?")
 parser.add_argument("--minexp", required = False, help = "A threshold used to put the least expressed isoform as 'other'.")
 parser.add_argument("--minsamps", required = False, help = "A threshold to determine the minimum of samples to take a gene into account.")
+parser.add_argument("--plotfile", required = False, help = "The name of the plot file.")
 
 parser.add_argument("-GN", "--genenameF", nargs = "*", help = "Returns the name of the gene.")
-parser.add_argument("-GP", "--geneposF", nargs = "*", help = "Returns the name of the gene.")
+parser.add_argument("-GP", "--geneposF", nargs = "*", help = "Returns the position of the gene in the list.")
 parser.add_argument("-GI", "--geneinfo", nargs = "*", help = "Returns all the information contained in 'data' file about the gene.")
 parser.add_argument("-GS", "--genestats", nargs = "*", help = "Returns the mean proportion of each isoform of the gene.")
 parser.add_argument("-GFP", "--genefilprop", nargs = "*", help = "Returns a list of the isoforms and their respective total proportions, reversed ordered by these proportions.")
@@ -42,6 +43,7 @@ dftype = args.dftype
 ordered = args.ordered
 minexp = args.minexp
 minsamps = args.minsamps
+plotfile = args.plotfile
 
 genenameF = args.genenameF
 geneposF = args.geneposF
@@ -106,16 +108,16 @@ elif geneclass != None:
     a = Functions.gene_classification(DATA, gene, dftype, minexp, minsamps)
     
 elif geneboxplot != None:
-    Functions.gene_boxplot(DATA, gene, ordered)
+    Functions.gene_boxplot(DATA, gene, plotfile, ordered)
 
 elif genematrix != None:
-    Functions.gene_matrix(DATA, gene)
+    Functions.gene_matrix(DATA, gene, plotfile)
 
 elif genebarplot != None:
-    Functions.gene_barplot(DATA, gene)
+    Functions.gene_barplot(DATA, gene, plotfile)
     
 elif genefiltbarplot != None:
-    Functions.gene_filtered_barplot(DATA, gene, minexp)
+    Functions.gene_filtered_barplot(DATA, gene, plotfile, minexp)
 
 try:
     if type(a) == str:
