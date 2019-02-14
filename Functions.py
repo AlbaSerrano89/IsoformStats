@@ -209,7 +209,7 @@ def gene_statistics(all_data, gene, pretty = 'F'):
     else:
         return(gene2)
 
-def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
+def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.8):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
         
@@ -222,38 +222,34 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
             genestats = gene_stats[gene2]
             genedata = gene_data(all_data, gene2)[gene2]
             
-            means = [trans[2] for trans in genestats[4:]]
-            means_array = np.asarray(means)
-            high_props = list(means_array[means_array > minexp])
-            ntrans = len(high_props)
+            cum_means = [trans[3] for trans in genestats[4:]]
+            ind_thres = np.searchsorted(cum_means, minexp, side = 'right')
+            ntrans = ind_thres + 1
             
-            if ntrans == 0:
-                return('There is not any isoform of the gene ' + gene2 + ' with a mean expression higher than ' + str(minexp))
-            else:
-                transcripts = [trans[0] for trans in genestats[4:][:ntrans]]
-                trans_type = [trans[1] for trans in genestats[4:][:ntrans]]
-                cumu_props = [trans[3] for trans in genestats[4:][:ntrans]]
+            transcripts = [trans[0] for trans in genestats[4:][:ntrans]]
+            trans_type = [trans[1] for trans in genestats[4:][:ntrans]]
+            high_props = [trans[2] for trans in genestats[4:][:ntrans]]
+            cumu_props = [trans[3] for trans in genestats[4:][:ntrans]]
+            
+            total_sum = np.float64(cumu_props[-1])
+            
+            new_means = list(high_props / total_sum)
+            new_cumus = list(cumu_props / total_sum)
+            
+            if ntrans != len(genestats[3:]):
+                transcripts.append('other')
+                trans_type.append('-')
+                high_props.append(sum(high_props))
                 
-                total_sum = np.float64(cumu_props[-1])
+                last_cum = cum_means[-1]
+                if round(last_cum, 5) == 1:
+                    cumu_props.append(1.0)
+                else:
+                    print('The gene ' + gene2 + ' is just explained in a ' + str(round(last_cum * 100, 2)) + '%.')
+                    cumu_props.append(last_cum)
                 
-                new_means = list(means[:ntrans] / total_sum)
-                new_cumus = list(cumu_props / total_sum)
-                
-                if ntrans != len(genestats[3:]):
-                    transcripts.append('other')
-                    trans_type.append('-')
-                    high_props.append(sum(means[ntrans:]))
-                
-                    last_cum = high_props[-1] + cumu_props[-1]
-                    if round(last_cum, 5) == 1:
-                        cumu_props.append(1.0)
-                        
-                    else:
-                        print('The gene ' + gene2 + ' is just explained in a ' + str(round(last_cum * 100, 2)) + '%.')
-                        cumu_props.append(last_cum)
-                    
-                    new_means.append('-')
-                    new_cumus.append('-')
+                new_means.append('-')
+                new_cumus.append('-')
             
             results = [transcripts, trans_type, high_props, cumu_props, new_means, new_cumus]
             
@@ -275,7 +271,7 @@ def gene_filtered_proportions(all_data, gene, pretty = 'F', minexp = 0.1):
     else:
         return(gene2)
 
-def gene_classification(all_data, gene, pretty = 'F', minexp = 0.1, minsamps = 10):
+def gene_classification(all_data, gene, pretty = 'F', minexp = 0.8, minsamps = 10):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
