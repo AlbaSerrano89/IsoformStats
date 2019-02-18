@@ -32,6 +32,7 @@ parser.add_argument("--genetype", nargs = '+', required = False, help = "The con
 parser.add_argument("--drop_tsfile", required = False, help = "T/F: do you want to remove the tissue summary file?")
 parser.add_argument("--in_thresfile", required = False, help = "The name of the file where the tissue different thresholds statistics file has been saved by tissuediffthresstats.")
 parser.add_argument("--samplots", nargs = '+', required = False, help = "For how many samples do you want to see the histograms?")
+parser.add_argument("--plotfile", required = False, help = "The name of the plot file.")
 
 parser.add_argument("-TSu", "--tissuesummary", nargs = "*", help = "Returns a csv file with a conclusion for each gene.")
 parser.add_argument("-TSt", "--tissuestats", nargs = "*", help = "Returns a list with the statistics of the dataframe of 'tissuesummary'.")
@@ -60,8 +61,9 @@ out_statsfile = args.out_statsfile
 in_statsfile = args.in_statsfile
 genetype = args.genetype
 drop_tsfile = args.drop_tsfile
-samplots = args.samplots
 in_thresfile = args.in_thresfile
+samplots = args.samplots
+plotfile = args.plotfile
 
 tissuesummary = args.tissuesummary
 tissuestats = args.tissuestats
@@ -117,8 +119,6 @@ if samplots == None:
 if tissuesummary != None:    
     if minexp == None:
         minexp = 0.1
-    else:
-        minexp=float(args.minexp)
 
     if minsamps == None:
         minsamps = '10'
@@ -127,6 +127,12 @@ if tissuesummary != None:
 
 elif tissuestats != None:
     a = Functions.tissue_statistics(in_tsfile, savefile, out_statsfile, genetype, drop_tsfile)
+
+elif tissuediffthressum != None:
+    Functions.tissue_difthres_summaries(data, seqnumsamps, out_thresdir, seqexp, ncpus, num_cores)
+
+elif tissuediffthresstats != None:
+    Functions.tissue_difthres_statistics(in_thresdir, genetype, drop_tsfile)
 
 elif tissueallbarplot != None:
     if minexp == None:
@@ -139,7 +145,7 @@ elif tissueallbarplot != None:
     else:
         minsamps = int(minsamps)
     
-    Functions.tissue_all_barplot(in_statsfile, minexp, minsamps)
+    Functions.tissue_all_barplot(in_statsfile, plotfile, minexp, minsamps)
     
 elif tissueexprbarplot != None:
     if minexp == None:
@@ -152,16 +158,10 @@ elif tissueexprbarplot != None:
     else:
         minsamps = int(minsamps)
     
-    Functions.tissue_exp_barplot(in_statsfile, minexp, minsamps)
-
-elif tissuediffthressum != None:
-    Functions.tissue_difthres_summaries(data, seqnumsamps, out_thresdir, seqexp, ncpus, num_cores)
-
-elif tissuediffthresstats != None:
-    Functions.tissue_difthres_statistics(in_thresdir, genetype, drop_tsfile)
+    Functions.tissue_exp_barplot(in_statsfile, plotfile, minexp, minsamps)
 
 elif tissuediffthresplot != None:
-    Functions.tissue_difthres_barplot(in_thresfile, genetype, samplots)
+    Functions.tissue_difthres_barplot(in_thresfile, plotfile, genetype, samplots)
 
 try:
     if type(a) == pandas.core.frame.DataFrame:
