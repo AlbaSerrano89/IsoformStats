@@ -887,7 +887,7 @@ def all_tissues_barplot(stats_directory, minexp, minsamps, genetype = ''):
     
     df = df[['Monoform', 'Biform', 'Triform', 'Multiform', 'NotExpressed', 'FewSamples', 'LowExpressedTranscripts']]
     
-    # df = df[['Monoform', 'Biform', 'Triform', 'Multiform']]
+    df = df[['Monoform', 'Biform', 'Triform', 'Multiform']]
     
     df2 = df.T
     
