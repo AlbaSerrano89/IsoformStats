@@ -905,11 +905,7 @@ def all_tissues_barplot(stats_directory, minexp, minsamps, filename = 'AllTissue
         df = df.append(df1.T)
         df.rename(index = {'Total': file[:-15]}, inplace = True)
     
-
-    df = df[['Monoform', 'Biform', 'Triform', 'Multiform']]
-
     df = df[['Monoform', 'Biform', 'Triform', 'Multiform', 'NotExpressed', 'FewSamples', 'LowExpressed']]
-
     
     df2 = df.T
     
