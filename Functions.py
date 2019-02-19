@@ -960,7 +960,7 @@ def all_tissues_barplot_expr(stats_directory, minexp, minsamps, filename = 'AllT
     if stats_directory[-1] != '/':
         stats_directory = stats_directory + '/'
     
-    if filename == 'AllTissuesBarplot':
+    if filename == 'AllTissuesBarplotExpr':
         filename = filename + '_' + str(minexp) + '_' + str(minsamps) + '.pdf'
     
     df = pd.DataFrame()
