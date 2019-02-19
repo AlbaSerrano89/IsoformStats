@@ -328,7 +328,7 @@ def gene_classification(all_data, gene, pretty = 'F', minexp = 0.8, minsamps = 1
     else:
         return(gene2)
 
-def tissue_summary(csv_file, out_tsdir = 'results', out_tsfile = '', minexp = 0.1, minsamps_txt = '10'):
+def tissue_summary(csv_file, out_tsdir = 'results', out_tsfile = '', minexp = 0.8, minsamps_txt = '10'):
     Data = dict()    
     lastbar = csv_file.rfind('/')
     file = csv_file[(lastbar + 1):]    
@@ -670,7 +670,7 @@ def gene_barplot(all_data, gene, filename):
     else:
         return(gene2)
 
-def gene_filtered_barplot(all_data, gene, filename, minexp = 0.1):
+def gene_filtered_barplot(all_data, gene, filename, minexp = 0.8):
     gene2 = gene_name(all_data, gene)
     genes = all_data[0]
     
