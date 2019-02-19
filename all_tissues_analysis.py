@@ -5,7 +5,6 @@ Created on Mon Nov  5 16:14:47 2018
 
 @author: aserrano
 """
-
 import argparse
 import Functions
 
@@ -51,8 +50,6 @@ if minexp != None:
 
 if minsamps != None:
     minsamps = int(minsamps)
-
-pd.set_option('max_columns', 100)
 
 if alltissdiffthres != None:
     Functions.all_tissues_difthres_statistics(in_thresdir, statsdir, genetype, drop_tsfiles)
