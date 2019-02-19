@@ -21,6 +21,7 @@ parser.add_argument("--plotfile", required = False, help = "The name of the plot
 
 parser.add_argument("-ATDT", "--alltissdiffthres", nargs = "*", help = "Creates the directory and the files where all the statistics per tissue will be saved.")
 parser.add_argument("-ATB", "--alltissuesbarplot", nargs = "*", help = "Draws an horizontal barplot to show the differences between all the tissues.")
+parser.add_argument("-ATBE", "--alltissuesbarplotexpressed", nargs = "*", help = "Draws an horizontal barplot to show the differences between the expressed genes of all the tissues.")
 
 args = parser.parse_args()
 
@@ -34,6 +35,7 @@ plotfile = args.plotfile
 
 alltissdiffthres = args.alltissdiffthres
 alltissuesbarplot = args.alltissuesbarplot
+alltissuesbarplotexpressed = args.alltissuesbarplotexpressed
 
 if statsdir == None:
     statsdir = 'diffthres_stats_alltissues/'
@@ -43,18 +45,26 @@ if genetype == None:
 
 if drop_tsfiles == None:
     drop_tsfiles = 'T'
-
+ 
 if minexp != None:
     minexp = float(minexp)
 
 if minsamps != None:
     minsamps = int(minsamps)
 
-if genetype == None:
-    genetype = ''
+pd.set_option('max_columns', 100)
 
 if alltissdiffthres != None:
     Functions.all_tissues_difthres_statistics(in_thresdir, statsdir, genetype, drop_tsfiles)
-    
+
 elif alltissuesbarplot != None:
+    if plotfile == None:
+        plotfile = 'AllTissuesBarplot.pdf'
+       
     Functions.all_tissues_barplot(statsdir, plotfile, minexp, minsamps, genetype)
+
+elif alltissuesbarplotexpressed != None:
+    if plotfile == None:
+        plotfile = 'AllTissuesBarplot_Expressed.pdf'
+       
+    Functions.all_tissues_barplot_expr(statsdir, plotfile, minexp, minsamps, genetype)
