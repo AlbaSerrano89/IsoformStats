@@ -506,7 +506,11 @@ def tissue_difthres_statistics(in_thresdir, genetype = '', drop_tsfile = 'T'):
     tissue = '_'.join(tissue_list)
     df.to_csv(in_thresdir + tissue + '_statistics.csv')
 
-def all_tissues_difthres_statistics(in_thresdir, stats_dir = 'diffthres_stats_alltissues/', genetype = '', drop_tsfile = 'T'):
+def all_tissues_difthres_summaries(initial_dir, seqnumsamps, out_threstsdir = 'AllTissues_Summaries_DifThres/', seqexp = 0.05, ncpus = 1, num_cores = 1):
+    for file in sorted(os.listdir(initial_dir)):
+        tissue_difthres_summaries(initial_dir + file, seqnumsamps, out_threstsdir, seqexp, ncpus, num_cores)
+
+def all_tissues_difthres_statistics(in_thresdir, stats_dir = 'AllTissues_Summaries_DifThres/', genetype = '', drop_tsfile = 'T'):
     if in_thresdir[-1] != '/':
         in_thresdir = in_thresdir + '/'
     
