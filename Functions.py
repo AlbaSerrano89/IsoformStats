@@ -896,6 +896,9 @@ def all_tissues_barplot(stats_directory, minexp, minsamps, filename = 'AllTissue
     if filename == 'AllTissuesBarplot':
         filename = filename + '_' + str(minexp) + '_' + str(minsamps) + '.pdf'
     
+    minexp = float(minexp)
+    minsamps = int(minsamps)
+    
     df = pd.DataFrame()
     for file in os.listdir(stats_directory):
         df1 = pd.read_csv(stats_directory + file, index_col = 0)

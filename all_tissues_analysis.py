@@ -56,12 +56,12 @@ if alltissdiffthres != None:
 
 elif alltissuesbarplot != None:
     if plotfile == None:
-        plotfile = 'AllTissuesBarplot.pdf'
-       
-    Functions.all_tissues_barplot(statsdir, plotfile, minexp, minsamps, genetype)
+        plotfile = 'AllTissuesBarplot'
+    
+    Functions.all_tissues_barplot(statsdir, minexp, minsamps, plotfile, genetype)
 
 elif alltissuesbarplotexpressed != None:
     if plotfile == None:
-        plotfile = 'AllTissuesBarplot_Expressed.pdf'
-       
-    Functions.all_tissues_barplot_expr(statsdir, plotfile, minexp, minsamps, genetype)
+        plotfile = 'AllTissuesBarplotExpr'
+    
+    Functions.all_tissues_barplot_expr(statsdir, minexp, minsamps, plotfile, genetype)
