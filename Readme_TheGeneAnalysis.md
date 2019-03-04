@@ -146,12 +146,12 @@ $ python gene_analysis.py -GI --data AllTissues_Initial/SMTS_Fallopian_Tube.csv.
 ENSG00000000971.11 - CFH ---> protein_coding
 
                          TranscriptType  GTEX-OHPK-2326-SM-3MJH2  GTEX-S32W-1326-SM-4AD5Q  GTEX-S341-0826-SM-4AD73  GTEX-SE5C-0926-SM-4BRUF  GTEX-T5JW-0326-SM-4DM6J  GTEX-T6MO-1026-SM-4DM72  GTEX-U3ZN-1126-SM-4DXUL
-ENST00000359637.2        protein_coding                 0.083466   				 0.090150                 0.074938				   0.153378                 0.000000  				 0.146685                 0.000000
-ENST00000367429.4        protein_coding                 0.626797   				 0.565943                 0.531016				   0.801218                 0.584634  				 0.468970                 0.576389
-ENST00000439155.2        protein_coding                 0.213858   				 0.343907                 0.250208				   0.000000                 0.415366  				 0.310296                 0.423611
-ENST00000466229.1       retained_intron                 0.043730   				 0.000000                 0.033306				   0.026578                 0.000000  				 0.074048                 0.000000
-ENST00000470918.1       retained_intron                 0.032149   				 0.000000                 0.081391				   0.018826                 0.000000  				 0.000000                 0.000000
-ENST00000496761.1  processed_transcript                 0.000000   				 0.000000                 0.029142				   0.000000                 0.000000  				 0.000000                 0.000000
+ENST00000359637.2        protein_coding                 0.083466                 0.090150                 0.074938                 0.153378                 0.000000                 0.146685                 0.000000
+ENST00000367429.4        protein_coding                 0.626797                 0.565943                 0.531016                 0.801218                 0.584634                 0.468970                 0.576389
+ENST00000439155.2        protein_coding                 0.213858                 0.343907                 0.250208                 0.000000                 0.415366                 0.310296                 0.423611
+ENST00000466229.1       retained_intron                 0.043730                 0.000000                 0.033306                 0.026578                 0.000000                 0.074048                 0.000000
+ENST00000470918.1       retained_intron                 0.032149                 0.000000                 0.081391                 0.018826                 0.000000                 0.000000                 0.000000
+ENST00000496761.1  processed_transcript                 0.000000                 0.000000                 0.029142                 0.000000                 0.000000                 0.000000                 0.000000
 ```
 
 We only keep those samples where the gene is expressed:
