@@ -896,11 +896,14 @@ def tissue_difthres_barplot(in_thresfile, plotfile = None, expressed = False, ge
     
     if genetype == '':
         fig.suptitle('Comparing the different thresholds', fontsize = 14)
+        top_marg = 0.93
     else:
         gtps = '\n'.join(genetype)
         fig.suptitle('Comparing the different thresholds for:\n' + gtps, fontsize = 10)
+        ngtps = len(genetype)
+        top_marg = 0.93 - 0.03 * ngtps
     
-    plt.subplots_adjust(bottom = 0.2, top = 0.93, right = 0.98, left = 0.27)
+    plt.subplots_adjust(bottom = 0.2, top = top_marg, right = 0.98, left = 0.27)
     plt.savefig(plotfile)
 
 # --- ALL TISSUES PLOTS --- #

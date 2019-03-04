@@ -307,7 +307,7 @@ Let's see an example:
 $ python gene_analysis.py -GM --data AllTissues_Initial/SMTS_Fallopian_Tube.csv.gz --genepos 6
 ```
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/ENSG00000000971.11_Matrix.png  "Gene matrix function")
+![GeneMatrix](./plots/ENSG00000000971.11_Matrix.png)
 
 By default, in this case, the plot file is called *ENSG00000000971.11_Matrix.png*.
 
@@ -341,7 +341,7 @@ and let's draw the barplot with these data:
 $ python gene_analysis.py -GBar --data AllTissues_Initial/SMTS_Fallopian_Tube.csv.gz --genepos 6
 ```
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/ENSG00000000971.11_Barplot.png  "Gene barplot function")
+![GeneBarplot](./plots/ENSG00000000971.11_Barplot.png)
 
 By default, in this case, the plot file is called *ENSG00000000971.11_Barplot.png*.
 
@@ -375,7 +375,7 @@ It works like this:
 $ python gene_analysis.py -GBox --data AllTissues_Initial/SMTS_Fallopian_Tube.csv.gz --genepos 6
 ```
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/ENSG00000000971.11_Boxplot.png  "Gene boxplot function")
+![GeneBoxplot](./plots/ENSG00000000971.11_Boxplot.png)
 
 In this case, the name of the plot file is *ENSG00000000971.11_Boxplot.png*.
 
@@ -408,6 +408,6 @@ So the filtered barplot is:
 $ python gene_analysis.py -GFB --data AllTissues_Initial/SMTS_Fallopian_Tube.csv.gz --genepos 6 --minexp 0.9
 ```
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/ENSG00000000971.11_0.9_FilteredBarplot.png  "Gene filtered barplot 0.9")
+![GeneFiltBar](./plots/ENSG00000000971.11_0.9_FilteredBarplot.png)
 
 In this case, the name of the plot file is *ENSG00000000971.11_0.9_FilteredBarplot.png* (being 0.9 the `minexp` argument).

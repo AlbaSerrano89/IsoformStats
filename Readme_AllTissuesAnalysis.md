@@ -185,7 +185,7 @@ $ python all_tissues_analysis.py -ATB --minsamps 3
 
 This line has created the file *AllTissuesBarplot_0.8_3.png* in the working directory:
 
-![ATB0.8_3_All](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/AllTissuesBarplot_0.8_3.png)
+![ATB0.8_3_All](./plots/AllTissuesBarplot_0.8_3.png)
 
 If we only wanted to see the expressed genes, we just need to add the `--expressed` argument:
 
@@ -195,7 +195,7 @@ $ python all_tissues_analysis.py -ATB --minsamps 3 --expressed
 
 Now, the file name is called *AllTissuesBarplotExpr_0.8_3.png*:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/AllTissuesBarplotExpr_0.8_3.png  "AllTissues Barplot 0.8 3 ExpressedGenes")
+![ATB0.8_3_Expr](./plots/AllTissuesBarplotExpr_0.8_3.png)
 
 Since in the **All tissues different thresholds statistics function** we did not use the `out_statsdir` to change the name of the different thresholds statistics folder, it is not necessary to use the `--in_statsdir` one because the default is the same as the first one, but in case you have saved the different thresholds statistics files inside a folder called different than *AllTissues_Statistics_DifThres*, you must add this argument with the correct directory name.
 
@@ -209,4 +209,4 @@ $ python all_tissues_analysis.py -ATB --minsamps 3 --genetype protein_coding pse
 
 This statement creates the file *AllTissuesBarplot_0.8_3_protein_coding-pseudogene.png*:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/AllTissuesBarplot_0.8_3_protein_coding-pseudogene.png  "AllTissues Barplot 0.8 3 ProtCod_PseudoGenes")
+![ATB0.8_3_PT&pseudo](./plots/AllTissuesBarplot_0.8_3_protein_coding-pseudogene.png)

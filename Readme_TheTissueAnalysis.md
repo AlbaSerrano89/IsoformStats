@@ -286,7 +286,7 @@ $ python one_tissue_analysis.py -TB --in_statsfile SMTS_Fallopian_Tube_0.900_1_s
 
 This call has created a *.png* file called *SMTS_Fallopian_Tube_0.9_1_AllGenesBarplot.png*:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_0.9_1_AllGenesBarplot.png  "FT 0.9 1 AllGenes Barplot")
+![TissueBarplot_0.9_1_All](./plots/SMTS_Fallopian_Tube_0.9_1_AllGenesBarplot.png)
 
 If you have used the tissue different thresholds statistics function, creating one unique file for the statistics of all pairs of thresholds, you should use the `--in_thresfile` instead of the `--in_statsfile` one; then, the functions takes the thresholds you write:
 
@@ -296,7 +296,7 @@ $ python one_tissue_analysis.py -TB --in_thresfile SMTS_Fallopian_Tube_statistic
 
 This call has created the file *SMTS_Fallopian_Tube_0.8_5_AllGenesBarplot.png* in the working directory:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_0.8_5_AllGenesBarplot.png  "FT 0.8 5 AllGenes Barplot")
+![TissueBarplot_0.8_5_All](./plots/SMTS_Fallopian_Tube_0.8_5_AllGenesBarplot.png  "FT 0.8 5 AllGenes Barplot")
 
 In this case, if you do not write the thresholds, the function use the defaults: `--minexp 0.8` and `--minsamps 10`.
 
@@ -308,7 +308,7 @@ $ python one_tissue_analysis.py -TB --in_statsfile SMTS_Fallopian_Tube_0.900_1_s
 
 Now, the new *.png* file is called *SMTS_Fallopian_Tube_0.9_1_ExpressedGenesBarplot.png*:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_0.9_1_ExpressedGenesBarplot.png  "FT 0.9 1 ExpressedGenes Barplot")
+![TissueBarplot_0.9_1_Expr](./plots/SMTS_Fallopian_Tube_0.9_1_ExpressedGenesBarplot.png)
 
 Or with the different threshold statistics file:
 
@@ -316,7 +316,7 @@ Or with the different threshold statistics file:
 $ python one_tissue_analysis.py -TB --in_thresfile SMTS_Fallopian_Tube_statistics.csv --minexp 0.8 --minsamps 5 --expressed
 ```
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_0.8_5_ExpressedGenesBarplot.png  "FT 0.8 5 ExpressedGenes Barplot")
+![TissueBarplot_0.8_5_Expr](./plots/SMTS_Fallopian_Tube_0.8_5_ExpressedGenesBarplot.png)
 
 #### Tissue different thresholds barplots function: `-TDB`
 
@@ -347,7 +347,7 @@ This call has created a file called *SMTS_Fallopian_Tube_AllDiffThresHistograms.
 
 Remember we created the *SMTS_Fallopian_Tube_statistics.csv* with the `--seqnumsamps 1 3 5 7`, so we have obtained 4 plots:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_AllDiffThresHistograms.png  "DiffThres Histogram AllSamps")
+![TissueHistogram_All](./plots/SMTS_Fallopian_Tube_AllDiffThresHistograms.png)
 
 If we add the `--samplots` argument with just 2 of this `seqnumsamps`, we just obtain 2 plots:
 
@@ -355,7 +355,7 @@ If we add the `--samplots` argument with just 2 of this `seqnumsamps`, we just o
 $ python one_tissue_analysis.py -TDB --in_thresfile SMTS_Fallopian_Tube_statistics.csv --samplots 3 5
 ```
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_3-5_AllDiffThresHistograms.png  "DiffThres Histogram 3-5 Samps")
+![TissueHistogram_3-5_All](./plots/SMTS_Fallopian_Tube_3-5_AllDiffThresHistograms.png)
 
 Besides, we can add the `--expressed` argument, as before:
 
@@ -363,9 +363,9 @@ Besides, we can add the `--expressed` argument, as before:
 $ python one_tissue_analysis.py -TDB --in_thresfile SMTS_Fallopian_Tube_statistics.csv --expressed
 ```
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_ExpressedDiffThresHistograms.png  "DiffThress Histogram AllSamps ExpressedGenes")
+![TissueHistogram_Expr](./plots/SMTS_Fallopian_Tube_ExpressedDiffThresHistograms.png  "DiffThress Histogram AllSamps ExpressedGenes")
 
-In addition, we might add the `--genetype` argument in order to draw only the results of those gene types we want:
+Finally, we might add the `--genetype` argument in order to draw only the results of those gene types we want:
 
 ```bash
 $ python one_tissue_analysis.py -TDB --in_thresfile SMTS_Fallopian_Tube_statistics.csv --genetype protein_coding pseudogene
@@ -373,4 +373,4 @@ $ python one_tissue_analysis.py -TDB --in_thresfile SMTS_Fallopian_Tube_statisti
 
 This call has created the file *SMTS_Fallopian_Tube_protein_coding-pseudogene_AllDiffThresHistograms.png*, which have the next plot:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/SMTS_Fallopian_Tube_protein_coding-pseudogene_AllDiffThresHistograms.png  "DiffThres AllSamps PC&pseudo")
+![TissueHistogram_PC&pseudo](/home/aserrano/GitHub/IsoformStats/plots/SMTS_Fallopian_Tube_protein_coding-pseudogene_AllDiffThresHistograms.png)

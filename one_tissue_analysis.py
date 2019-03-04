@@ -76,7 +76,6 @@ tissuediffthresstats = args.tissuediffthresstats
 tissuebarplot = args.tissuebarplot
 tissuediffthresplot = args.tissuediffthresplot
 
-#print('seqnumsamps: {}.'.format(seqnumsamps))
 # ---------------------- Functions ---------------------- #
 pd.set_option('max_columns', 100)
 
