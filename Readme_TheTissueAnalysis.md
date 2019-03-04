@@ -373,4 +373,4 @@ $ python one_tissue_analysis.py -TDB --in_thresfile SMTS_Fallopian_Tube_statisti
 
 This call has created the file *SMTS_Fallopian_Tube_protein_coding-pseudogene_AllDiffThresHistograms.png*, which have the next plot:
 
-![TissueHistogram_PC-pseudo](/home/aserrano/GitHub/IsoformStats/plots/SMTS_Fallopian_Tube_protein_coding-pseudogene_AllDiffThresHistograms.png)
+![TissueHistogram_PC-pseudo](./plots/SMTS_Fallopian_Tube_protein_coding-pseudogene_AllDiffThresHistograms.png)
