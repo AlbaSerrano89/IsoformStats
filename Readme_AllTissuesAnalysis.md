@@ -185,7 +185,7 @@ $ python all_tissues_analysis.py -ATB --minsamps 3
 
 This line has created the file *AllTissuesBarplot_0.8_3.png* in the working directory:
 
-![ ](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/AllTissuesBarplot_0.8_3.png  "AllTissues Barplot 0.8 3 AllGenes")
+![ATB0.8_3_All](/home/aserrano/PROJECTS/3.Mattia/1.- IsoformStats/plots/AllTissuesBarplot_0.8_3.png?raw=true "AllTissues Barplot 0.8 3 AllGenes")
 
 If we only wanted to see the expressed genes, we just need to add the `--expressed` argument:
 
