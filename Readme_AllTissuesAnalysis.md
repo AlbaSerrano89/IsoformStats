@@ -49,80 +49,27 @@ Optional arguments:
 
 You have to have all the initial data for each tissue inside the `initial_dir` directory you write.
 
-For instance, our folder *AllTissues_Initial2* contains four initial data files, one per tissue:
+For instance, our folder *AllTissues_Initial* contains 32 initial data files, one per tissue:
 
 ```bash
-$ ls AllTissues_Initial2
-SMTS_Bladder.csv.gz  SMTS_Bone_Marrow.csv.gz  SMTS_Cervix_Uteri.csv.gz  SMTS_Fallopian_Tube.csv.gz
+$ ls AllTissues_Initial | wc -l
+32
 ```
 
-So, if we put this folder with the `--initial_dir` argument with, for instance, the same `--seqnumsamps` used in the *OneTissueAnalysis* document...
+So, if we put this folder as the `--initial_dir` argument with, for instance, 1, 10, 100 and 1000 as the `--seqnumsamps` one...
 
 ```bash
-$ python all_tissues_analysis.py -ATDTSum --initial_dir AllTissues_Initial2/ --seqnumsamps 1 3 5 7
+$ python all_tissues_analysis.py -ATDTSum --initial_dir AllTissues_Initial/ --seqnumsamps 1 10 100 1000
 ```
 
-This call has created a new folder called *AllTissues_Summaries_DifThres* where it has saved all the summaries:
+This call has created a new folder called *AllTissues_Summaries_DifThres* where it has saved 2560 summaries (`= 32 x 20 x 4` --> 32 original tissue files, 20 `minexp` values, 4 `minsamps` values):
 
 ```bash
-$ ls AllTissues_Summaries_DifThres/
-SMTS_Bladder_0.000_1.csv  SMTS_Bladder_0.650_5.csv      SMTS_Bone_Marrow_0.350_1.csv   SMTS_Cervix_Uteri_0.000_5.csv  SMTS_Cervix_Uteri_0.700_1.csv    SMTS_Fallopian_Tube_0.350_5.csv
-SMTS_Bladder_0.000_3.csv  SMTS_Bladder_0.650_7.csv      SMTS_Bone_Marrow_0.350_3.csv   SMTS_Cervix_Uteri_0.000_7.csv  SMTS_Cervix_Uteri_0.700_3.csv    SMTS_Fallopian_Tube_0.350_7.csv
-SMTS_Bladder_0.000_5.csv  SMTS_Bladder_0.700_1.csv      SMTS_Bone_Marrow_0.350_5.csv   SMTS_Cervix_Uteri_0.050_1.csv  SMTS_Cervix_Uteri_0.700_5.csv    SMTS_Fallopian_Tube_0.400_1.csv
-SMTS_Bladder_0.000_7.csv  SMTS_Bladder_0.700_3.csv      SMTS_Bone_Marrow_0.350_7.csv   SMTS_Cervix_Uteri_0.050_3.csv  SMTS_Cervix_Uteri_0.700_7.csv    SMTS_Fallopian_Tube_0.400_3.csv
-SMTS_Bladder_0.050_1.csv  SMTS_Bladder_0.700_5.csv      SMTS_Bone_Marrow_0.400_1.csv   SMTS_Cervix_Uteri_0.050_5.csv  SMTS_Cervix_Uteri_0.750_1.csv    SMTS_Fallopian_Tube_0.400_5.csv
-SMTS_Bladder_0.050_3.csv  SMTS_Bladder_0.700_7.csv      SMTS_Bone_Marrow_0.400_3.csv   SMTS_Cervix_Uteri_0.050_7.csv  SMTS_Cervix_Uteri_0.750_3.csv    SMTS_Fallopian_Tube_0.400_7.csv
-SMTS_Bladder_0.050_5.csv  SMTS_Bladder_0.750_1.csv      SMTS_Bone_Marrow_0.400_5.csv   SMTS_Cervix_Uteri_0.100_1.csv  SMTS_Cervix_Uteri_0.750_5.csv    SMTS_Fallopian_Tube_0.450_1.csv
-SMTS_Bladder_0.050_7.csv  SMTS_Bladder_0.750_3.csv      SMTS_Bone_Marrow_0.400_7.csv   SMTS_Cervix_Uteri_0.100_3.csv  SMTS_Cervix_Uteri_0.750_7.csv    SMTS_Fallopian_Tube_0.450_3.csv
-SMTS_Bladder_0.100_1.csv  SMTS_Bladder_0.750_5.csv      SMTS_Bone_Marrow_0.450_1.csv   SMTS_Cervix_Uteri_0.100_5.csv  SMTS_Cervix_Uteri_0.800_1.csv    SMTS_Fallopian_Tube_0.450_5.csv
-SMTS_Bladder_0.100_3.csv  SMTS_Bladder_0.750_7.csv      SMTS_Bone_Marrow_0.450_3.csv   SMTS_Cervix_Uteri_0.100_7.csv  SMTS_Cervix_Uteri_0.800_3.csv    SMTS_Fallopian_Tube_0.450_7.csv
-SMTS_Bladder_0.100_5.csv  SMTS_Bladder_0.800_1.csv      SMTS_Bone_Marrow_0.450_5.csv   SMTS_Cervix_Uteri_0.150_1.csv  SMTS_Cervix_Uteri_0.800_5.csv    SMTS_Fallopian_Tube_0.500_1.csv
-SMTS_Bladder_0.100_7.csv  SMTS_Bladder_0.800_3.csv      SMTS_Bone_Marrow_0.450_7.csv   SMTS_Cervix_Uteri_0.150_3.csv  SMTS_Cervix_Uteri_0.800_7.csv    SMTS_Fallopian_Tube_0.500_3.csv
-SMTS_Bladder_0.150_1.csv  SMTS_Bladder_0.800_5.csv      SMTS_Bone_Marrow_0.500_1.csv   SMTS_Cervix_Uteri_0.150_5.csv  SMTS_Cervix_Uteri_0.850_1.csv    SMTS_Fallopian_Tube_0.500_5.csv
-SMTS_Bladder_0.150_3.csv  SMTS_Bladder_0.800_7.csv      SMTS_Bone_Marrow_0.500_3.csv   SMTS_Cervix_Uteri_0.150_7.csv  SMTS_Cervix_Uteri_0.850_3.csv    SMTS_Fallopian_Tube_0.500_7.csv
-SMTS_Bladder_0.150_5.csv  SMTS_Bladder_0.850_1.csv      SMTS_Bone_Marrow_0.500_5.csv   SMTS_Cervix_Uteri_0.200_1.csv  SMTS_Cervix_Uteri_0.850_5.csv    SMTS_Fallopian_Tube_0.550_1.csv
-SMTS_Bladder_0.150_7.csv  SMTS_Bladder_0.850_3.csv      SMTS_Bone_Marrow_0.500_7.csv   SMTS_Cervix_Uteri_0.200_3.csv  SMTS_Cervix_Uteri_0.850_7.csv    SMTS_Fallopian_Tube_0.550_3.csv
-SMTS_Bladder_0.200_1.csv  SMTS_Bladder_0.850_5.csv      SMTS_Bone_Marrow_0.550_1.csv   SMTS_Cervix_Uteri_0.200_5.csv  SMTS_Cervix_Uteri_0.900_1.csv    SMTS_Fallopian_Tube_0.550_5.csv
-SMTS_Bladder_0.200_3.csv  SMTS_Bladder_0.850_7.csv      SMTS_Bone_Marrow_0.550_3.csv   SMTS_Cervix_Uteri_0.200_7.csv  SMTS_Cervix_Uteri_0.900_3.csv    SMTS_Fallopian_Tube_0.550_7.csv
-SMTS_Bladder_0.200_5.csv  SMTS_Bladder_0.900_1.csv      SMTS_Bone_Marrow_0.550_5.csv   SMTS_Cervix_Uteri_0.250_1.csv  SMTS_Cervix_Uteri_0.900_5.csv    SMTS_Fallopian_Tube_0.600_1.csv
-SMTS_Bladder_0.200_7.csv  SMTS_Bladder_0.900_3.csv      SMTS_Bone_Marrow_0.550_7.csv   SMTS_Cervix_Uteri_0.250_3.csv  SMTS_Cervix_Uteri_0.900_7.csv    SMTS_Fallopian_Tube_0.600_3.csv
-SMTS_Bladder_0.250_1.csv  SMTS_Bladder_0.900_5.csv      SMTS_Bone_Marrow_0.600_1.csv   SMTS_Cervix_Uteri_0.250_5.csv  SMTS_Cervix_Uteri_0.950_1.csv    SMTS_Fallopian_Tube_0.600_5.csv
-SMTS_Bladder_0.250_3.csv  SMTS_Bladder_0.900_7.csv      SMTS_Bone_Marrow_0.600_3.csv   SMTS_Cervix_Uteri_0.250_7.csv  SMTS_Cervix_Uteri_0.950_3.csv    SMTS_Fallopian_Tube_0.600_7.csv
-SMTS_Bladder_0.250_5.csv  SMTS_Bladder_0.950_1.csv      SMTS_Bone_Marrow_0.600_5.csv   SMTS_Cervix_Uteri_0.300_1.csv  SMTS_Cervix_Uteri_0.950_5.csv    SMTS_Fallopian_Tube_0.650_1.csv
-SMTS_Bladder_0.250_7.csv  SMTS_Bladder_0.950_3.csv      SMTS_Bone_Marrow_0.600_7.csv   SMTS_Cervix_Uteri_0.300_3.csv  SMTS_Cervix_Uteri_0.950_7.csv    SMTS_Fallopian_Tube_0.650_3.csv
-SMTS_Bladder_0.300_1.csv  SMTS_Bladder_0.950_5.csv      SMTS_Bone_Marrow_0.650_1.csv   SMTS_Cervix_Uteri_0.300_5.csv  SMTS_Fallopian_Tube_0.000_1.csv  SMTS_Fallopian_Tube_0.650_5.csv
-SMTS_Bladder_0.300_3.csv  SMTS_Bladder_0.950_7.csv      SMTS_Bone_Marrow_0.650_3.csv   SMTS_Cervix_Uteri_0.300_7.csv  SMTS_Fallopian_Tube_0.000_3.csv  SMTS_Fallopian_Tube_0.650_7.csv
-SMTS_Bladder_0.300_5.csv  SMTS_Bone_Marrow_0.000_1.csv  SMTS_Bone_Marrow_0.650_5.csv   SMTS_Cervix_Uteri_0.350_1.csv  SMTS_Fallopian_Tube_0.000_5.csv  SMTS_Fallopian_Tube_0.700_1.csv
-SMTS_Bladder_0.300_7.csv  SMTS_Bone_Marrow_0.000_3.csv  SMTS_Bone_Marrow_0.650_7.csv   SMTS_Cervix_Uteri_0.350_3.csv  SMTS_Fallopian_Tube_0.000_7.csv  SMTS_Fallopian_Tube_0.700_3.csv
-SMTS_Bladder_0.350_1.csv  SMTS_Bone_Marrow_0.000_5.csv  SMTS_Bone_Marrow_0.700_1.csv   SMTS_Cervix_Uteri_0.350_5.csv  SMTS_Fallopian_Tube_0.050_1.csv  SMTS_Fallopian_Tube_0.700_5.csv
-SMTS_Bladder_0.350_3.csv  SMTS_Bone_Marrow_0.000_7.csv  SMTS_Bone_Marrow_0.700_3.csv   SMTS_Cervix_Uteri_0.350_7.csv  SMTS_Fallopian_Tube_0.050_3.csv  SMTS_Fallopian_Tube_0.700_7.csv
-SMTS_Bladder_0.350_5.csv  SMTS_Bone_Marrow_0.050_1.csv  SMTS_Bone_Marrow_0.700_5.csv   SMTS_Cervix_Uteri_0.400_1.csv  SMTS_Fallopian_Tube_0.050_5.csv  SMTS_Fallopian_Tube_0.750_1.csv
-SMTS_Bladder_0.350_7.csv  SMTS_Bone_Marrow_0.050_3.csv  SMTS_Bone_Marrow_0.700_7.csv   SMTS_Cervix_Uteri_0.400_3.csv  SMTS_Fallopian_Tube_0.050_7.csv  SMTS_Fallopian_Tube_0.750_3.csv
-SMTS_Bladder_0.400_1.csv  SMTS_Bone_Marrow_0.050_5.csv  SMTS_Bone_Marrow_0.750_1.csv   SMTS_Cervix_Uteri_0.400_5.csv  SMTS_Fallopian_Tube_0.100_1.csv  SMTS_Fallopian_Tube_0.750_5.csv
-SMTS_Bladder_0.400_3.csv  SMTS_Bone_Marrow_0.050_7.csv  SMTS_Bone_Marrow_0.750_3.csv   SMTS_Cervix_Uteri_0.400_7.csv  SMTS_Fallopian_Tube_0.100_3.csv  SMTS_Fallopian_Tube_0.750_7.csv
-SMTS_Bladder_0.400_5.csv  SMTS_Bone_Marrow_0.100_1.csv  SMTS_Bone_Marrow_0.750_5.csv   SMTS_Cervix_Uteri_0.450_1.csv  SMTS_Fallopian_Tube_0.100_5.csv  SMTS_Fallopian_Tube_0.800_1.csv
-SMTS_Bladder_0.400_7.csv  SMTS_Bone_Marrow_0.100_3.csv  SMTS_Bone_Marrow_0.750_7.csv   SMTS_Cervix_Uteri_0.450_3.csv  SMTS_Fallopian_Tube_0.100_7.csv  SMTS_Fallopian_Tube_0.800_3.csv
-SMTS_Bladder_0.450_1.csv  SMTS_Bone_Marrow_0.100_5.csv  SMTS_Bone_Marrow_0.800_1.csv   SMTS_Cervix_Uteri_0.450_5.csv  SMTS_Fallopian_Tube_0.150_1.csv  SMTS_Fallopian_Tube_0.800_5.csv
-SMTS_Bladder_0.450_3.csv  SMTS_Bone_Marrow_0.100_7.csv  SMTS_Bone_Marrow_0.800_3.csv   SMTS_Cervix_Uteri_0.450_7.csv  SMTS_Fallopian_Tube_0.150_3.csv  SMTS_Fallopian_Tube_0.800_7.csv
-SMTS_Bladder_0.450_5.csv  SMTS_Bone_Marrow_0.150_1.csv  SMTS_Bone_Marrow_0.800_5.csv   SMTS_Cervix_Uteri_0.500_1.csv  SMTS_Fallopian_Tube_0.150_5.csv  SMTS_Fallopian_Tube_0.850_1.csv
-SMTS_Bladder_0.450_7.csv  SMTS_Bone_Marrow_0.150_3.csv  SMTS_Bone_Marrow_0.800_7.csv   SMTS_Cervix_Uteri_0.500_3.csv  SMTS_Fallopian_Tube_0.150_7.csv  SMTS_Fallopian_Tube_0.850_3.csv
-SMTS_Bladder_0.500_1.csv  SMTS_Bone_Marrow_0.150_5.csv  SMTS_Bone_Marrow_0.850_1.csv   SMTS_Cervix_Uteri_0.500_5.csv  SMTS_Fallopian_Tube_0.200_1.csv  SMTS_Fallopian_Tube_0.850_5.csv
-SMTS_Bladder_0.500_3.csv  SMTS_Bone_Marrow_0.150_7.csv  SMTS_Bone_Marrow_0.850_3.csv   SMTS_Cervix_Uteri_0.500_7.csv  SMTS_Fallopian_Tube_0.200_3.csv  SMTS_Fallopian_Tube_0.850_7.csv
-SMTS_Bladder_0.500_5.csv  SMTS_Bone_Marrow_0.200_1.csv  SMTS_Bone_Marrow_0.850_5.csv   SMTS_Cervix_Uteri_0.550_1.csv  SMTS_Fallopian_Tube_0.200_5.csv  SMTS_Fallopian_Tube_0.900_1.csv
-SMTS_Bladder_0.500_7.csv  SMTS_Bone_Marrow_0.200_3.csv  SMTS_Bone_Marrow_0.850_7.csv   SMTS_Cervix_Uteri_0.550_3.csv  SMTS_Fallopian_Tube_0.200_7.csv  SMTS_Fallopian_Tube_0.900_3.csv
-SMTS_Bladder_0.550_1.csv  SMTS_Bone_Marrow_0.200_5.csv  SMTS_Bone_Marrow_0.900_1.csv   SMTS_Cervix_Uteri_0.550_5.csv  SMTS_Fallopian_Tube_0.250_1.csv  SMTS_Fallopian_Tube_0.900_5.csv
-SMTS_Bladder_0.550_3.csv  SMTS_Bone_Marrow_0.200_7.csv  SMTS_Bone_Marrow_0.900_3.csv   SMTS_Cervix_Uteri_0.550_7.csv  SMTS_Fallopian_Tube_0.250_3.csv  SMTS_Fallopian_Tube_0.900_7.csv
-SMTS_Bladder_0.550_5.csv  SMTS_Bone_Marrow_0.250_1.csv  SMTS_Bone_Marrow_0.900_5.csv   SMTS_Cervix_Uteri_0.600_1.csv  SMTS_Fallopian_Tube_0.250_5.csv  SMTS_Fallopian_Tube_0.950_1.csv
-SMTS_Bladder_0.550_7.csv  SMTS_Bone_Marrow_0.250_3.csv  SMTS_Bone_Marrow_0.900_7.csv   SMTS_Cervix_Uteri_0.600_3.csv  SMTS_Fallopian_Tube_0.250_7.csv  SMTS_Fallopian_Tube_0.950_3.csv
-SMTS_Bladder_0.600_1.csv  SMTS_Bone_Marrow_0.250_5.csv  SMTS_Bone_Marrow_0.950_1.csv   SMTS_Cervix_Uteri_0.600_5.csv  SMTS_Fallopian_Tube_0.300_1.csv  SMTS_Fallopian_Tube_0.950_5.csv
-SMTS_Bladder_0.600_3.csv  SMTS_Bone_Marrow_0.250_7.csv  SMTS_Bone_Marrow_0.950_3.csv   SMTS_Cervix_Uteri_0.600_7.csv  SMTS_Fallopian_Tube_0.300_3.csv  SMTS_Fallopian_Tube_0.950_7.csv
-SMTS_Bladder_0.600_5.csv  SMTS_Bone_Marrow_0.300_1.csv  SMTS_Bone_Marrow_0.950_5.csv   SMTS_Cervix_Uteri_0.650_1.csv  SMTS_Fallopian_Tube_0.300_5.csv
-SMTS_Bladder_0.600_7.csv  SMTS_Bone_Marrow_0.300_3.csv  SMTS_Bone_Marrow_0.950_7.csv   SMTS_Cervix_Uteri_0.650_3.csv  SMTS_Fallopian_Tube_0.300_7.csv
-SMTS_Bladder_0.650_1.csv  SMTS_Bone_Marrow_0.300_5.csv  SMTS_Cervix_Uteri_0.000_1.csv  SMTS_Cervix_Uteri_0.650_5.csv  SMTS_Fallopian_Tube_0.350_1.csv
-SMTS_Bladder_0.650_3.csv  SMTS_Bone_Marrow_0.300_7.csv  SMTS_Cervix_Uteri_0.000_3.csv  SMTS_Cervix_Uteri_0.650_7.csv  SMTS_Fallopian_Tube_0.350_3.csv
+$ ls AllTissues_Summaries_DifThres/ | wc -l
+2560
 ```
 
-Altogether, there are 320 tissue summary files (`= 4 x 20 x 4` --> 4 original tissue files, 20 `minexp` values, 4 `minsamps` values).
+This step could take a big while, according to the number of tissue files, the memmory they take up, etc.
 
 #### All tissues different thresholds statistics function: `-ATDTSta`
 
@@ -137,6 +84,8 @@ Optional arguments:
 * `--genetype`
 * `--drop_tsfiles`
 
+> **NOTE**: there just has to be the tissue different thresholds summary files inside the `in_thresdir` folder.
+
 Let's do a prove:
 
 ```bash
@@ -146,13 +95,13 @@ $ python all_tissues_analysis.py -ATDTSta
 This has created the folder *AllTissues_Statistics_DifThres* with one different thresholds tissue statistics file per each tissue:
 
 ```bash
-$ ls AllTissues_Statistics_DifThres/
-SMTS_Bladder_statistics.csv  SMTS_Bone_Marrow_statistics.csv  SMTS_Cervix_Uteri_statistics.csv  SMTS_Fallopian_Tube_statistics.csv
+$ ls AllTissues_Statistics_DifThres/ | wc -l
+32
 ```
 
 Since in the **All tissues different thresholds summaries function** we did not use the `out_thresdir` to change the name of the different thresholds summaries folder, it is not necessary to use the `--in_thresdir` one because the default is the same as the first one, but in case you have saved the different thresholds summary files inside a folder called different than *AllTissues_Summaries_DifThres*, you must add this argument with the correct directory name.
 
-> **NOTE**: there just has to be the tissue different thresholds summary files inside the `in_thresdir` folder.
+As in case of the **Tissue different threshold statistics function**, you can add the argument `--out_statsdir` (to change the name of the different thresholds statistics directory), the `--genetype` one (to select which gene types you want to analyse) and the `--drop_tsfiles` one (to remove all the different thresholds tissue summary files).
 
 ## Plot function
 
@@ -180,22 +129,22 @@ By default, the arguments `minexp` and `minsamps` are 0.8 and 10, respectively, 
 Let's see the first plot:
 
 ```bash
-$ python all_tissues_analysis.py -ATB --minsamps 3
+$ python all_tissues_analysis.py -ATB
 ```
 
-This line has created the file *AllTissuesBarplot_0.8_3.png* in the working directory:
+This line has created the file *AllTissuesBarplot_0.8_10.png* in the working directory:
 
-![ATB0.8_3_All](./plots/AllTissuesBarplot_0.8_3.png)
+![ ATB0.8_10_All](./plots/AllTissuesBarplot_0.8_10.png)
 
 If we only wanted to see the expressed genes, we just need to add the `--expressed` argument:
 
 ```bash
-$ python all_tissues_analysis.py -ATB --minsamps 3 --expressed
+$ python all_tissues_analysis.py -ATB --expressed
 ```
 
-Now, the file name is called *AllTissuesBarplotExpr_0.8_3.png*:
+Now, the file name is called *AllTissuesBarplotExpr_0.8_10.png*:
 
-![ATB0.8_3_Expr](./plots/AllTissuesBarplotExpr_0.8_3.png)
+![ATB0.8_10_Expr](./plots/AllTissuesBarplotExpr_0.8_10.png)
 
 Since in the **All tissues different thresholds statistics function** we did not use the `out_statsdir` to change the name of the different thresholds statistics folder, it is not necessary to use the `--in_statsdir` one because the default is the same as the first one, but in case you have saved the different thresholds statistics files inside a folder called different than *AllTissues_Statistics_DifThres*, you must add this argument with the correct directory name.
 
@@ -204,9 +153,9 @@ Since in the **All tissues different thresholds statistics function** we did not
 As in the cases of the tissue barplots, we can take the results only for the gene types we want:
 
 ```bash
-$ python all_tissues_analysis.py -ATB --minsamps 3 --genetype protein_coding pseudogene
+$ python all_tissues_analysis.py -ATB --genetype protein_coding pseudogene
 ```
 
-This statement creates the file *AllTissuesBarplot_0.8_3_protein_coding-pseudogene.png*:
+This statement creates the file *AllTissuesBarplot_0.8_10_protein_coding-pseudogene.png*:
 
-![ATB0.8_3_PT&pseudo](./plots/AllTissuesBarplot_0.8_3_protein_coding-pseudogene.png)
+![ATB0.8_10_PT&pseudo](./plots/AllTissuesBarplot_0.8_10_protein_coding-pseudogene.png)

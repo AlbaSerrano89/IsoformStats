@@ -932,7 +932,7 @@ def all_tissues_barplot(stats_directory, minexp, minsamps, expressed = False, pl
         df1 = df1.Total
         df = df.append(df1.T)
         df.rename(index = {'Total': file[:-15]}, inplace = True)
-    
+        
     if expressed:
         df = df[['Monoform', 'Biform', 'Triform', 'Multiform']]
         colors = ['C0', 'C1', 'C2', 'C3']
@@ -990,13 +990,8 @@ def all_tissues_barplot(stats_directory, minexp, minsamps, expressed = False, pl
                 pos_text = 0
                 text = ''
             
-            if i % 2 == 0:
-                vert = 'bottom'
-            else:
-                vert = 'top'
-            
-            plt.text(pos_text, j, text, color = 'black', fontsize = 'xx-small', ha = 'right', va = vert)
-#    
+            plt.text(pos_text, j, text, color = 'black', fontsize = 'xx-small', ha = 'right', va = 'center')
+    
     ax8.set_xlabel('Minimum expression: ' + str(minexp) + '\nMinimum samples: ' + str(minsamps))
     ax8.set_ylabel('Tissues')
     
